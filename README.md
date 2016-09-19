@@ -34,7 +34,7 @@ The method uses Bullwinkle.send method to send the data. It wraps the original m
 | id    | unique message id |
 | raw   | original raw data sent to the partner |
 
-To receive and ACK a message on the agent side, the standard bullwinkle library can be used:
+To receive and ACK a message on the agent side, the standard Bullwinkle library can be used:
 
 ```squirrel
 #require "bullwinkle.class.nut:2.3.1"
@@ -49,4 +49,4 @@ bull.on("data", function(message, reply) {
 
 # License
 
-The TheThingsIO library is licensed under the [MIT License](https://github.com/electricimp/thethingsapi/tree/master/LICENSE).
+The ImpPager library is licensed under the [MIT License](https://github.com/electricimp/thethingsapi/tree/master/LICENSE).
