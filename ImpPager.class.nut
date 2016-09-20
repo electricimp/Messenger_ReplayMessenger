@@ -19,7 +19,7 @@ class ImpPager {
     _logger = null;
 
     // Message retry timer
-    _pendingMessageTimer = null;
+    _retryTimer = null;
 
     // Map of message -> SPI Flash address
     _messageAddrMap = null;
@@ -31,7 +31,6 @@ class ImpPager {
         _bull = Bullwinkle({"messageTimeout" : IMP_PAGER_MESSAGE_TIMEOUT});
         _conn = conn ? conn : ConnectionManager({"stayConnected": true});
         _logger = logger ? logger : SPIFlashLogger();
-        _scheduleProcessMessagesTimer();
         _messageAddrMap = {}
         _messageCounter = 0;
 
@@ -43,8 +42,12 @@ class ImpPager {
         // Set the recommended buffer size
         imp.setsendbuffersize(8096);
 
+        // Set ConnectionManager listeners
         _conn.onConnect(_onConnect.bindenv(this));
         _conn.onDisconnect(_onDisconnect.bindenv(this));
+
+        // Schedule routine to retry sending messages
+        _scheduleRetryIfConnected();
     }
 
     function send(messageName, data = null) {
@@ -88,7 +91,7 @@ class ImpPager {
         return date().time + "-" + (_messageCounter++);
     }
 
-    function _processPendingMessages() {
+    function _retry() {
         _log_debug("Start processing pending messages...");
         _logger.read(
             function(dataPoint, addr, next) {
@@ -105,35 +108,37 @@ class ImpPager {
             }.bindenv(this),
             function() {
                 _log_debug("Finished processing all pending messages");
-                _scheduleProcessMessagesTimer();
+                _scheduleRetryIfConnected();
             }.bindenv(this)
         );
     }
 
     function _onConnect() {
         _log_debug("onConnect: scheduling pending message processor...");
-        _scheduleProcessMessagesTimer();        
+        _scheduleRetryIfConnected();
     }
 
     function _onDisconnect(expected) {
         _log_debug("onDisconnect: cancelling pending message processor...");
         // Stop any attempts to process pending messages while we are disconnected
-        _cancelPendingMessageProcessTimer();
+        _cancelRetryTimer();
     }
 
-    function _cancelPendingMessageProcessTimer() {
-        if (!_pendingMessageTimer) {
+    function _cancelRetryTimer() {
+        if (!_retryTimer) {
             return;
         }
-        imp.cancelwakeup(_pendingMessageTimer);
-        _pendingMessageTimer = null;
+        imp.cancelwakeup(_retryTimer);
+        _retryTimer = null;
     }
 
-    function _scheduleProcessMessagesTimer() {
-        _cancelPendingMessageProcessTimer();
-        _pendingMessageTimer = imp.wakeup(
-            IMP_PAGER_RETRY_PERIOD_SEC, 
-            _processPendingMessages.bindenv(this));
+    function _scheduleRetryIfConnected() {
+        if (!_conn.isConnected()) {
+            return;
+        }
+
+        _cancelRetryTimer();
+        _retryTimer = imp.wakeup(IMP_PAGER_RETRY_PERIOD_SEC, _retry.bindenv(this));
     }
 
     function _log_debug(str) {
