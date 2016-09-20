@@ -10,13 +10,13 @@ const IMP_PAGER_ITERATE_OVER_RETRIES_PERIOD_SEC = 0.2;
 class ImpPager {
 
     // Bullwinkle instance
-    _bull = null;
+    _bullwinkle = null;
 
     // ConnectionManager instance
-    _conn = null;
+    _connectionManager = null;
 
     // SPIFlashLogger instance
-    _logger = null;
+    _spiFlashLogger = null;
 
     // Message retry timer
     _retryTimer = null;
@@ -27,10 +27,12 @@ class ImpPager {
     // Message counter used for generating unique message id
     _messageCounter = 0;
 
-    constructor(conn = null, logger = null) {
-        _bull = Bullwinkle({"messageTimeout" : IMP_PAGER_MESSAGE_TIMEOUT});
-        _conn = conn ? conn : ConnectionManager({"stayConnected": true});
-        _logger = logger ? logger : SPIFlashLogger();
+    constructor(connectionManager, bullwinkle = null, spiFlashLogger = null, debug = false) {
+        _connectionManager = connectionManager;
+
+        _bullwinkle = bullwinkle ? bullwinkle : Bullwinkle({"messageTimeout" : IMP_PAGER_MESSAGE_TIMEOUT});
+        _spiFlashLogger = spiFlashLogger ? spiFlashLogger : SPIFlashLogger();
+
         _messageAddrMap = {}
         _messageCounter = 0;
 
@@ -43,8 +45,8 @@ class ImpPager {
         imp.setsendbuffersize(8096);
 
         // Set ConnectionManager listeners
-        _conn.onConnect(_onConnect.bindenv(this));
-        _conn.onDisconnect(_onDisconnect.bindenv(this));
+        _connectionManager.onConnect(_onConnect.bindenv(this));
+        _connectionManager.onDisconnect(_onDisconnect.bindenv(this));
 
         // Schedule routine to retry sending messages
         _scheduleRetryIfConnected();
@@ -56,14 +58,14 @@ class ImpPager {
             "raw" : data
         };
         _send(messageName, message);
-    }    
+    }
 
     function _onSuccess(message) {
         // Erase message from the logger if it was cached
         if (message.data.id in _messageAddrMap) {
             local addr = _messageAddrMap[message.data.id];
             _log_debug("Erasing address: " + addr)
-            _logger.erase(addr);
+            _spiFlashLogger.erase(addr);
             _messageAddrMap.rawdelete(message);
         }
     }
@@ -72,12 +74,12 @@ class ImpPager {
         // On fail write the message to the SPI Flash for further processing
         if (!(message.data.id in _messageAddrMap)) {
             _messageAddrMap[message.data.id] <- null;
-            _logger.write(message);
+            _spiFlashLogger.write(message);
         }
     }
 
     function _send(messageName, message) {
-        return _bull.send(messageName, message)
+        return _bullwinkle.send(messageName, message)
             .onSuccess(_onSuccess.bindenv(this))
             .onFail(_onFail.bindenv(this));
     }
@@ -93,10 +95,10 @@ class ImpPager {
 
     function _retry() {
         _log_debug("Start processing pending messages...");
-        _logger.read(
+        _spiFlashLogger.read(
             function(dataPoint, addr, next) {
                 // There's no point of retrying to send pending messages when disconnected
-                if (!_conn.isConnected()) {
+                if (!_connectionManager.isConnected()) {
                     // Abort scanning
                     next(false);
                     return;
@@ -133,7 +135,7 @@ class ImpPager {
     }
 
     function _scheduleRetryIfConnected() {
-        if (!_conn.isConnected()) {
+        if (!_connectionManager.isConnected()) {
             return;
         }
 
@@ -142,6 +144,62 @@ class ImpPager {
     }
 
     function _log_debug(str) {
-        // _conn.log(str);
+        _connectionManager.log(str);
     }
 }
+
+class ImpPager.ConnectionManager extends ConnectionManager {
+
+    // Global list of handlers to be called when device gets connected
+    _onConnectHandlers = array();
+
+    // Global list of handlers to be called when device gets disconnected
+    _onDisconnectHandlers = array();
+
+    constructor(settings = {}) {
+        base.constructor(settings);
+
+        base.onConnect(_onConnect);
+        base.onDisconnect(_onDisconnect);
+    }
+
+    function _onConnect() {
+        foreach (index, callback in _onConnectHandlers) {
+            if (callback != null) {
+                imp.wakeup(0, callback);
+            }
+        }
+    }
+
+    function _onDisconnect(expected) {
+        foreach (index, callback in _onDisconnectHandlers) {
+            if (callback != null) {
+                imp.wakeup(0, function() {
+                    callback(expected);
+                });
+            }
+        }
+    }
+
+    function filterOutEmptyItems(arr) {
+        return arr.filter(
+            function(index, value) {
+                return value != null;
+            }
+        );
+    }
+
+    function onConnect(callback) {
+        if (_onConnectHandlers.find(callback) == null) {
+            _onConnectHandlers.append(callback.weakref());
+        }
+        _onConnectHandlers = filterOutEmptyItems(_onConnectHandlers);
+    }
+
+    function onDisconnect(callback) {
+        if (_onDisconnectHandlers.find(callback) == null) {
+            _onDisconnectHandlers.append(callback.weakref());
+        }
+        _onDisconnectHandlers = filterOutEmptyItems(_onDisconnectHandlers);
+    }
+};
