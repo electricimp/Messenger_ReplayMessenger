@@ -93,7 +93,7 @@ class ImpPager {
         _logger.read(
             function(dataPoint, addr, next) {
                 if (!_conn.isConnected()) {
-                    // The imp is not connected at this point. There's no point of 
+                    // The imp is not connected at this point. There's no point of trying to resend messages.
                     return;
                 }
                 _send(dataPoint.name, dataPoint.data);
@@ -109,13 +109,13 @@ class ImpPager {
     }
 
     function _onConnect() {
-        _log_debug("onConnect: scheduling message processor...");
+        _log_debug("onConnect: scheduling pending message processor...");
         _scheduleProcessMessagesTimer();        
     }
 
     function _onDisconnect(expected) {
-        _log_debug("onDisconnect: cancelling message processor...");
-        // Stop any attempts to process pending messages for now
+        _log_debug("onDisconnect: cancelling pending message processor...");
+        // Stop any attempts to process pending messages while we are disconnected
         imp.cancelwakeup(_pendingMessageTimer);
     }
 
