@@ -1,5 +1,6 @@
 #require "SPIFlashLogger.class.nut:2.1.0"
 #require "ConnectionManager.class.nut:1.0.1"
+#require "Serializer.class.nut:1.0.0"
 #require "bullwinkle.class.nut:2.3.1"
 
 const IMP_PAGER_MESSAGE_TIMEOUT = 1;
