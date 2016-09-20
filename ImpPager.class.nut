@@ -1,11 +1,10 @@
 #require "SPIFlashLogger.class.nut:2.1.0"
 #require "ConnectionManager.class.nut:1.0.1"
-#require "Serializer.class.nut:1.0.0"
 #require "bullwinkle.class.nut:2.3.1"
 
-const ADV_MESSENGER_MESSAGE_TIMEOUT = 1;
-const ADV_MESSENGER_PROCESS_PENDING_MSGS_PERIOD_SEC = 2;
-const ADV_MESSENGER_PROCESS_NEXT_PENDING_MSG_PERIOD_SEC = 0.2;
+const IMP_PAGER_MESSAGE_TIMEOUT = 1;
+const IMP_PAGER_RETRY_PERIOD_SEC = 2;
+const IMP_PAGER_ITERATE_OVER_RETRIES_PERIOD_SEC = 0.2;
 
 class ImpPager {
 
@@ -28,7 +27,7 @@ class ImpPager {
     _messageCounter = 0;
 
     constructor(conn = null, logger = null) {
-        _bull = Bullwinkle({"messageTimeout" : ADV_MESSENGER_MESSAGE_TIMEOUT});
+        _bull = Bullwinkle({"messageTimeout" : IMP_PAGER_MESSAGE_TIMEOUT});
         _conn = conn ? conn : ConnectionManager({"stayConnected": true});
         _logger = logger ? logger : SPIFlashLogger();
         _scheduleProcessMessagesTimer();
@@ -99,7 +98,7 @@ class ImpPager {
                 _send(dataPoint.name, dataPoint.data);
                 _messageAddrMap[dataPoint.data.id] <- addr;
                 _log_debug("Reading from the SPI Flash: " + dataPoint.data.raw + " at addr: " + addr);
-                imp.wakeup(ADV_MESSENGER_PROCESS_NEXT_PENDING_MSG_PERIOD_SEC, next);
+                imp.wakeup(IMP_PAGER_ITERATE_OVER_RETRIES_PERIOD_SEC, next);
             }.bindenv(this),
             function() {
                 _log_debug("Finished processing all pending messages");
@@ -124,7 +123,7 @@ class ImpPager {
             imp.cancelwakeup(_pendingMessageTimer);    
         }
         _pendingMessageTimer = imp.wakeup(
-            ADV_MESSENGER_PROCESS_PENDING_MSGS_PERIOD_SEC, 
+            IMP_PAGER_RETRY_PERIOD_SEC, 
             _processPendingMessages.bindenv(this));
     }
 
