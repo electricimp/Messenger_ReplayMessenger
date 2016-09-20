@@ -37,7 +37,7 @@ class ImpPager {
 
         // Override the timeout to make it a nonzero, but still 
         // a small value. This is needed to avoid accedental 
-        // imp disconnects when using ConnectionManager library.
+        // imp disconnects when using ConnectionManager library
         server.setsendtimeoutpolicy(RETURN_ON_ERROR, WAIT_TIL_SENT, 1);
 
         // Set the recommended buffer size
@@ -80,11 +80,11 @@ class ImpPager {
     }
 
     /**
-     * Generates unique message id. It should incrementally increase.
+     * Generates unique message id. It should incrementally increase
      */
     function _getMessageUniqueId() {
         // Using a local counter seems good enough as there is almost 
-        // no chance for subsiquent values to collide even if device reboots.
+        // no chance for subsiquent values to collide even if device reboots
         return date().time + "-" + (_messageCounter++);
     }
 
@@ -92,8 +92,10 @@ class ImpPager {
         _log_debug("Start processing pending messages...");
         _logger.read(
             function(dataPoint, addr, next) {
+                // There's no point of retrying to send pending messages when disconnected
                 if (!_conn.isConnected()) {
-                    // The imp is not connected at this point. There's no point of trying to resend messages.
+                    // Abort scanning
+                    next(false);
                     return;
                 }
                 _send(dataPoint.name, dataPoint.data);
@@ -116,13 +118,19 @@ class ImpPager {
     function _onDisconnect(expected) {
         _log_debug("onDisconnect: cancelling pending message processor...");
         // Stop any attempts to process pending messages while we are disconnected
+        _cancelPendingMessageProcessTimer();
+    }
+
+    function _cancelPendingMessageProcessTimer() {
+        if (!_pendingMessageTimer) {
+            return;
+        }
         imp.cancelwakeup(_pendingMessageTimer);
+        _pendingMessageTimer = null;
     }
 
     function _scheduleProcessMessagesTimer() {
-        if (_pendingMessageTimer) {
-            imp.cancelwakeup(_pendingMessageTimer);    
-        }
+        _cancelPendingMessageProcessTimer();
         _pendingMessageTimer = imp.wakeup(
             IMP_PAGER_RETRY_PERIOD_SEC, 
             _processPendingMessages.bindenv(this));
