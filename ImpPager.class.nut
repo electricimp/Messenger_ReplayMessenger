@@ -7,6 +7,9 @@ const IMP_PAGER_MESSAGE_TIMEOUT = 1;
 const IMP_PAGER_RETRY_PERIOD_SEC = 2;
 const IMP_PAGER_ITERATE_OVER_RETRIES_PERIOD_SEC = 0.2;
 
+const IMP_PAGER_CM_DEFAULT_SEND_TIMEOUT = 1;
+const IMP_PAGER_CM_DEFAULT_BUFFER_SIZE = 8096;
+
 class ImpPager {
 
     // Bullwinkle instance
@@ -35,14 +38,6 @@ class ImpPager {
 
         _messageAddrMap = {}
         _messageCounter = 0;
-
-        // Override the timeout to make it a nonzero, but still 
-        // a small value. This is needed to avoid accedental 
-        // imp disconnects when using ConnectionManager library
-        server.setsendtimeoutpolicy(RETURN_ON_ERROR, WAIT_TIL_SENT, 1);
-
-        // Set the recommended buffer size
-        imp.setsendbuffersize(8096);
 
         // Set ConnectionManager listeners
         _connectionManager.onConnect(_onConnect.bindenv(this));
@@ -159,6 +154,19 @@ class ImpPager.ConnectionManager extends ConnectionManager {
     constructor(settings = {}) {
         base.constructor(settings);
 
+        // Override the timeout to make it a nonzero, but still 
+        // a small value. This is needed to avoid accedental 
+        // imp disconnects when using ConnectionManager library
+        local sendTimeout = "sendTimeout" in settings ? 
+            settings.sendTimeout : IMP_PAGER_CM_DEFAULT_SEND_TIMEOUT;
+        server.setsendtimeoutpolicy(RETURN_ON_ERROR, WAIT_TIL_SENT, sendTimeout);
+
+        // Set the recommended buffer size
+        local sendBufferSize = "sendBufferSize" in settings ? 
+            settings.sendBufferSize : IMP_PAGER_CM_DEFAULT_BUFFER_SIZE;
+        imp.setsendbuffersize(sendBufferSize);
+
+        // Seting onConnect/onDisconnect handlers
         base.onConnect(_onConnect);
         base.onDisconnect(_onDisconnect);
     }
@@ -181,8 +189,11 @@ class ImpPager.ConnectionManager extends ConnectionManager {
         }
     }
 
-    function filterOutEmptyItems(arr) {
-        return arr.filter(
+    function _addHandlerAndCleanupEmptyOnes(handlers, callback) {
+        if (handlers.find(callback) == null) {
+            handlers.append(callback.weakref());
+        }
+        return handlers.filter(
             function(index, value) {
                 return value != null;
             }
@@ -190,16 +201,10 @@ class ImpPager.ConnectionManager extends ConnectionManager {
     }
 
     function onConnect(callback) {
-        if (_onConnectHandlers.find(callback) == null) {
-            _onConnectHandlers.append(callback.weakref());
-        }
-        _onConnectHandlers = filterOutEmptyItems(_onConnectHandlers);
+        _onConnectHandlers = _addHandlerAndCleanupEmptyOnes(_onConnectHandlers, callback);
     }
 
     function onDisconnect(callback) {
-        if (_onDisconnectHandlers.find(callback) == null) {
-            _onDisconnectHandlers.append(callback.weakref());
-        }
-        _onDisconnectHandlers = filterOutEmptyItems(_onDisconnectHandlers);
+        _onDisconnectHandlers = _addHandlerAndCleanupEmptyOnes(_onDisconnectHandlers, callback);
     }
 };
