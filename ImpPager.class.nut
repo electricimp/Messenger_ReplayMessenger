@@ -24,20 +24,13 @@ class ImpPager {
     // Message retry timer
     _retryTimer = null;
 
-    // Map of message -> SPI Flash address
-    _messageAddrMap = null;
-
-    // Message counter used for generating unique message id
-    _messageCounter = 0;
-
     constructor(connectionManager, bullwinkle = null, spiFlashLogger = null, debug = false) {
         _connectionManager = connectionManager;
 
         _bullwinkle = bullwinkle ? bullwinkle : Bullwinkle({"messageTimeout" : IMP_PAGER_MESSAGE_TIMEOUT});
         _spiFlashLogger = spiFlashLogger ? spiFlashLogger : SPIFlashLogger();
 
-        _messageAddrMap = {}
-        _messageCounter = 0;
+        // _spiFlashLogger.eraseAll(true);
 
         // Set ConnectionManager listeners
         _connectionManager.onConnect(_onConnect.bindenv(this));
@@ -52,21 +45,14 @@ class ImpPager {
     }
 
     function _onSuccess(message) {
-        // Erase message from the logger if it was cached
-        if (message.id in _messageAddrMap) {
-            local addr = _messageAddrMap[message.id];
-            _log_debug("Erasing address: " + addr)
-            _spiFlashLogger.erase(addr);
-            _messageAddrMap.rawdelete(message);
-        }
+        // Do nothing
+        _log_debug("ACKed message name: '" + message.name + "' data: " + message.data);
     }
 
     function _onFail(err, message, retry) {
+        _log_debug("Failed to deliver message name: '" + message.name + "' data: " + message.data);
         // On fail write the message to the SPI Flash for further processing
-        if (!(message.id in _messageAddrMap)) {
-            _messageAddrMap[message.id] <- null;
-            _spiFlashLogger.write(message);
-        }
+        _spiFlashLogger.write(message);
     }
 
     function _send(messageName, data, onReply = null) {
@@ -76,19 +62,12 @@ class ImpPager {
             .onReply(onReply);
     }
 
-    /**
-     * Generates unique message id. It should incrementally increase
-     */
-    function _getMessageUniqueId() {
-        // Using a local counter seems good enough as there is almost 
-        // no chance for subsiquent values to collide even if device reboots
-        return date().time + "-" + (_messageCounter++);
-    }
-
     function _retry() {
         _log_debug("Start processing pending messages...");
         _spiFlashLogger.read(
             function(dataPoint, addr, next) {
+                _log_debug("Reading from the SPI Flash. Data: " + dataPoint.data + " at addr: " + addr);
+
                 // There's no point of retrying to send pending messages when disconnected
                 if (!_connectionManager.isConnected()) {
                     // Abort scanning
@@ -96,8 +75,7 @@ class ImpPager {
                     return;
                 }
                 _send(dataPoint.name, dataPoint.data);
-                _messageAddrMap[dataPoint.id] <- addr;
-                _log_debug("Reading from the SPI Flash: " + dataPoint.data.raw + " at addr: " + addr);
+                _spiFlashLogger.erase(addr);
                 imp.wakeup(IMP_PAGER_ITERATE_OVER_RETRIES_PERIOD_SEC, next);
             }.bindenv(this),
             function() {
