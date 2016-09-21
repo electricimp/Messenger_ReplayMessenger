@@ -47,18 +47,14 @@ class ImpPager {
         _scheduleRetryIfConnected();
     }
 
-    function send(messageName, data = null) {
-        local message = {
-            "id"  : _getMessageUniqueId(),
-            "raw" : data
-        };
-        _send(messageName, message);
+    function send(messageName, data = null, onReply = null) {
+        _send(messageName, data, onReply);
     }
 
     function _onSuccess(message) {
         // Erase message from the logger if it was cached
-        if (message.data.id in _messageAddrMap) {
-            local addr = _messageAddrMap[message.data.id];
+        if (message.id in _messageAddrMap) {
+            local addr = _messageAddrMap[message.id];
             _log_debug("Erasing address: " + addr)
             _spiFlashLogger.erase(addr);
             _messageAddrMap.rawdelete(message);
@@ -67,16 +63,17 @@ class ImpPager {
 
     function _onFail(err, message, retry) {
         // On fail write the message to the SPI Flash for further processing
-        if (!(message.data.id in _messageAddrMap)) {
-            _messageAddrMap[message.data.id] <- null;
+        if (!(message.id in _messageAddrMap)) {
+            _messageAddrMap[message.id] <- null;
             _spiFlashLogger.write(message);
         }
     }
 
-    function _send(messageName, message) {
-        return _bullwinkle.send(messageName, message)
+    function _send(messageName, data, onReply = null) {
+        return _bullwinkle.send(messageName, data)
             .onSuccess(_onSuccess.bindenv(this))
-            .onFail(_onFail.bindenv(this));
+            .onFail(_onFail.bindenv(this))
+            .onReply(onReply);
     }
 
     /**
@@ -99,7 +96,7 @@ class ImpPager {
                     return;
                 }
                 _send(dataPoint.name, dataPoint.data);
-                _messageAddrMap[dataPoint.data.id] <- addr;
+                _messageAddrMap[dataPoint.id] <- addr;
                 _log_debug("Reading from the SPI Flash: " + dataPoint.data.raw + " at addr: " + addr);
                 imp.wakeup(IMP_PAGER_ITERATE_OVER_RETRIES_PERIOD_SEC, next);
             }.bindenv(this),
