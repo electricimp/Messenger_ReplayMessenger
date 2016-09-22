@@ -24,6 +24,9 @@ class ImpPager {
     // Message retry timer
     _retryTimer = null;
 
+    // Debug flag that controlls the debug output
+    _debug = false;
+
     constructor(connectionManager, bullwinkle = null, spiFlashLogger = null, debug = false) {
         _connectionManager = connectionManager;
 
@@ -38,6 +41,8 @@ class ImpPager {
 
         // Schedule routine to retry sending messages
         _scheduleRetryIfConnected();
+
+        _debug = debug;
     }
 
     function send(messageName, data = null, onReply = null) {
@@ -114,7 +119,9 @@ class ImpPager {
     }
 
     function _log_debug(str) {
-        _connectionManager.log(str);
+        if (_debug) {
+            _connectionManager.log(str);
+        }
     }
 }
 
