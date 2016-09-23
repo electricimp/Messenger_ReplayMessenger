@@ -8,7 +8,7 @@ The Library for reliable and resilient communication between imp devices and vir
 
 Extends [ConnectionManager](https://github.com/electricimp/connectionmanager/tree/v1.0.1) and overrides onConnect/onDisconnect methods to allow for multiple connect/disconnect handlers to be registered. 
 
-**ImpPager.ConnectionManager should be used instead of [ConnectionManager](https://github.com/electricimp/connectionmanager/tree/v1.0.1). Only a single instance of ImpPager.ConnectionManager should be created per application.**
+**ImpPager.ConnectionManager should be used instead of [ConnectionManager](https://github.com/electricimp/connectionmanager/tree/v1.0.1). Only a single instance of the class can be created per application.**
 
 ### Class Usage
 
@@ -74,7 +74,7 @@ cm.onConnect(function() {
 
 ## Class ImpPager
 
-The main library class. There may be multiple isntances of the class created by application.
+The main library class. There may be multiple instances of the class created by application.
 
 ### Constructor: ImpPager(*connectionManager, [bullwinkle], [spiFlashLogger], [debug]*)
 
@@ -82,7 +82,7 @@ Accepts two optional arguments:
 - connectionManager - instance of ImpPager.ConnectionManager class that extends [ConnectionManager](https://github.com/electricimp/connectionmanager/tree/v1.0.1).
 - bullwinkle - instance of [Bullwinkle](https://github.com/electricimp/Bullwinkle#bullwinklepackage). If null or not specified, is created by the ImpPager constructor with "messageTimeout" set to IMP_PAGER_MESSAGE_TIMEOUT (=1).
 - spiFlashLogger - instance of [SpiFlashLogger](https://github.com/electricimp/SpiFlashLogger)
-- debug - the flag that controlls library debug output. Defaults to false.
+- debug - the flag that controls library debug output. Defaults to false.
 
 
 ```squirrel
