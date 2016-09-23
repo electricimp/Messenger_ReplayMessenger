@@ -32,8 +32,6 @@ class ImpPager {
         _bullwinkle = bullwinkle ? bullwinkle : Bullwinkle({"messageTimeout" : IMP_PAGER_MESSAGE_TIMEOUT});
         _spiFlashLogger = spiFlashLogger ? spiFlashLogger : SPIFlashLogger();
 
-        // _spiFlashLogger.eraseAll(true);
-
         // Set ConnectionManager listeners
         _connectionManager.onConnect(_onConnect.bindenv(this));
         _connectionManager.onDisconnect(_onDisconnect.bindenv(this));
@@ -155,8 +153,6 @@ class ImpPager.ConnectionManager extends ConnectionManager {
     // Global list of handlers to be called when device gets disconnected
     _onDisconnectHandlers = array();
 
-    _instance = null;
-
     constructor(settings = {}) {
         base.constructor(settings);
 
@@ -175,6 +171,14 @@ class ImpPager.ConnectionManager extends ConnectionManager {
         // Seting onConnect/onDisconnect handlers
         base.onConnect(_onConnect);
         base.onDisconnect(_onDisconnect);
+    }
+
+    function onConnect(callback) {
+        _onConnectHandlers = _addHandlerAndCleanupEmptyOnes(_onConnectHandlers, callback);
+    }
+
+    function onDisconnect(callback) {
+        _onDisconnectHandlers = _addHandlerAndCleanupEmptyOnes(_onDisconnectHandlers, callback);
     }
 
     function _onConnect() {
@@ -206,11 +210,4 @@ class ImpPager.ConnectionManager extends ConnectionManager {
         );
     }
 
-    function onConnect(callback) {
-        _onConnectHandlers = _addHandlerAndCleanupEmptyOnes(_onConnectHandlers, callback);
-    }
-
-    function onDisconnect(callback) {
-        _onDisconnectHandlers = _addHandlerAndCleanupEmptyOnes(_onDisconnectHandlers, callback);
-    }
 };
