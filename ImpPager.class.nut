@@ -2,21 +2,19 @@
 // This file is licensed under the MIT License
 // http://opensource.org/licenses/MIT
 
-const IMP_PAGER_MESSAGE_TIMEOUT         = 1;
-const IMP_PAGER_RETRY_PERIOD_SEC        = 0.5;
-const IMP_PAGER_CM_DEFAULT_SEND_TIMEOUT = 1;
-const IMP_PAGER_CM_DEFAULT_BUFFER_SIZE  = 8096;
+const IMP_PAGER_MESSAGE_TIMEOUT    = 1;
+const IMP_PAGER_RETRY_INTERVAL_SEC = 0.5;
 
 class ImpPager {
 
     // MessageManager instance
-    _messageManager = null;
+    _mm = null;
 
     // ConnectionManager instance
-    _connectionManager = null;
+    _cm = null;
 
     // SPIFlashLogger instance
-    _spiFlashLogger = null;
+    _spiFL = null;
 
     // Message retry timer
     _retryTimer = null;
@@ -24,28 +22,45 @@ class ImpPager {
     // Debug flag that controlls the debug output
     _debug = false;
 
-    constructor(connectionManager, messageManager = null, spiFlashLogger = null, debug = false) {
-        _connectionManager = connectionManager;
+    // Handler to be called when we get connected
+    _onConnHandler = null;
 
-        _messageManager = messageManager ? messageManager : MessageManager({"messageTimeout" : IMP_PAGER_MESSAGE_TIMEOUT});
-        _spiFlashLogger = spiFlashLogger ? spiFlashLogger : SPIFlashLogger();
+    // Handler to be called when we get disconnected
+    _onDiscHandler = null;
+
+    // Retry interval
+    _retryInterval = null;
+
+    constructor(options = {}) {
+
+        _cm            = "connectionManager" in options ? options["connectionManager"] : ConnectionManager();
+        _mm            = "messageManager"    in options ? options["messageManager"]    : MessageManager({"messageTimeout" : IMP_PAGER_MESSAGE_TIMEOUT});
+        _spiFL         = "spiFlashLogger"    in options ? options["spiFlashLogger"]    : SPIFlashLogger();
+        _retryInterval = "retryInterval"     in options ? options["retryInterval"]     : IMP_PAGER_RETRY_INTERVAL_SEC;
+        _debug         = "debug"             in options ? options["debug"]             : debug;
 
         // Set MessageManager listeners
-        _messageManager.onAck(_onAck.bindenv(this))
-        _messageManager.onFail(_onFail.bindenv(this))
+        _mm.onAck(_onAck.bindenv(this))
+        _mm.onFail(_onFail.bindenv(this))
 
         // Set ConnectionManager listeners
-        _connectionManager.onConnect(_onConnect.bindenv(this));
-        _connectionManager.onDisconnect(_onDisconnect.bindenv(this));
+        _cm.onConnect(_onConnect.bindenv(this));
+        _cm.onDisconnect(_onDisconnect.bindenv(this));
 
         // Schedule routine to retry sending messages
         _scheduleRetryIfConnected();
-
-        _debug = debug;
     }
 
     function send(messageName, data = null, metadata = null) {
-        return _messageManager.send(messageName, data, IMP_PAGER_MESSAGE_TIMEOUT, metadata);
+        return _mm.send(messageName, data, _retryInterval, metadata);
+    }
+
+    function onConnect(callback) {
+        _onConnHandler = callback;
+    }
+
+    function onDisconnect(callback) {
+        _onDiscHandler = callback;
     }
 
     function _onAck(message) {
@@ -53,7 +68,7 @@ class ImpPager {
         _log_debug("ACKed message name: '" + message.payload.name + "', data: " + message.payload.data);
         if ("metadata" in message && "addr" in message.metadata && message.metadata.addr) {
             local addr = message.metadata.addr;
-            _spiFlashLogger.erase(addr);
+            _spiFL.erase(addr);
             message.metadata.addr = null;
             _scheduleRetryIfConnected();
         }
@@ -68,19 +83,19 @@ class ImpPager {
                 "name" : payload.name,
                 "data" : payload.data
             }
-            _spiFlashLogger.write(savedMsg);
+            _spiFL.write(savedMsg);
         }
         _scheduleRetryIfConnected();
     }
 
     function _retry() {
         _log_debug("Start processing pending messages...");
-        _spiFlashLogger.read(
+        _spiFL.read(
             function(savedMsg, addr, next) {
                 _log_debug("Reading from the SPI Flash. Data: " + savedMsg.data + " at addr: " + addr);
 
                 // There's no point of retrying to send pending messages when disconnected
-                if (!_connectionManager.isConnected()) {
+                if (!_cm.isConnected()) {
                     _log_debug("No connection, abort SPI Flash scanning...");
                     // Abort scanning
                     next(false);
@@ -101,12 +116,20 @@ class ImpPager {
     function _onConnect() {
         _log_debug("onConnect: scheduling pending message processor...");
         _scheduleRetryIfConnected();
+
+        if (_onConnHandler && typeof _onConnHandler == "function") {
+            _onConnHandler();
+        }
     }
 
     function _onDisconnect(expected) {
         _log_debug("onDisconnect: cancelling pending message processor...");
         // Stop any attempts to process pending messages while we are disconnected
         _cancelRetryTimer();
+
+        if (_onDiscHandler && typeof _onDiscHandler == "function") {
+            _onDiscHandler(expected);
+        }
     }
 
     function _cancelRetryTimer() {
@@ -118,84 +141,17 @@ class ImpPager {
     }
 
     function _scheduleRetryIfConnected() {
-        if (!_connectionManager.isConnected()) {
+        if (!_cm.isConnected()) {
             return;
         }
 
         _cancelRetryTimer();
-        _retryTimer = imp.wakeup(IMP_PAGER_RETRY_PERIOD_SEC, _retry.bindenv(this));
+        _retryTimer = imp.wakeup(_retryInterval, _retry.bindenv(this));
     }
 
     function _log_debug(str) {
         if (_debug) {
-            _connectionManager.log(str);
+            _cm.log(str);
         }
     }
 }
-
-class ImpPager.ConnectionManager extends ConnectionManager {
-
-    // Global list of handlers to be called when device gets connected
-    _onConnectHandlers = array();
-
-    // Global list of handlers to be called when device gets disconnected
-    _onDisconnectHandlers = array();
-
-    constructor(settings = {}) {
-        base.constructor(settings);
-
-        // Override the timeout to make it a nonzero, but still 
-        // a small value. This is needed to avoid accedental 
-        // imp disconnects when using ConnectionManager library
-        local sendTimeout = "sendTimeout" in settings ? 
-            settings.sendTimeout : IMP_PAGER_CM_DEFAULT_SEND_TIMEOUT;
-        server.setsendtimeoutpolicy(RETURN_ON_ERROR, WAIT_TIL_SENT, sendTimeout);
-
-        // Set the recommended buffer size
-        local sendBufferSize = "sendBufferSize" in settings ? 
-            settings.sendBufferSize : IMP_PAGER_CM_DEFAULT_BUFFER_SIZE;
-        imp.setsendbuffersize(sendBufferSize);
-
-        // Seting onConnect/onDisconnect handlers
-        base.onConnect(_onConnect);
-        base.onDisconnect(_onDisconnect);
-    }
-
-    function onConnect(callback) {
-        _onConnectHandlers = _addHandlerAndCleanupEmptyOnes(_onConnectHandlers, callback);
-    }
-
-    function onDisconnect(callback) {
-        _onDisconnectHandlers = _addHandlerAndCleanupEmptyOnes(_onDisconnectHandlers, callback);
-    }
-
-    function _onConnect() {
-        foreach (index, callback in _onConnectHandlers) {
-            if (callback != null) {
-                imp.wakeup(0, callback);
-            }
-        }
-    }
-
-    function _onDisconnect(expected) {
-        foreach (index, callback in _onDisconnectHandlers) {
-            if (callback != null) {
-                imp.wakeup(0, function() {
-                    callback(expected);
-                });
-            }
-        }
-    }
-
-    function _addHandlerAndCleanupEmptyOnes(handlers, callback) {
-        if (handlers.find(callback) == null) {
-            handlers.append(callback.weakref());
-        }
-        return handlers.filter(
-            function(index, value) {
-                return value != null;
-            }
-        );
-    }
-
-};
