@@ -1,18 +1,16 @@
-#require "SPIFlashLogger.class.nut:2.1.0"
-#require "ConnectionManager.class.nut:1.0.1"
-#require "Serializer.class.nut:1.0.0"
-#require "bullwinkle.class.nut:2.3.1"
+// Copyright (c) 2016-2017 Electric Imp
+// This file is licensed under the MIT License
+// http://opensource.org/licenses/MIT
 
-const IMP_PAGER_MESSAGE_TIMEOUT = 1;
-const IMP_PAGER_RETRY_PERIOD_SEC = 0.5;
-
+const IMP_PAGER_MESSAGE_TIMEOUT         = 1;
+const IMP_PAGER_RETRY_PERIOD_SEC        = 0.5;
 const IMP_PAGER_CM_DEFAULT_SEND_TIMEOUT = 1;
-const IMP_PAGER_CM_DEFAULT_BUFFER_SIZE = 8096;
+const IMP_PAGER_CM_DEFAULT_BUFFER_SIZE  = 8096;
 
 class ImpPager {
 
-    // Bullwinkle instance
-    _bullwinkle = null;
+    // MessageManager instance
+    _messageManager = null;
 
     // ConnectionManager instance
     _connectionManager = null;
@@ -26,11 +24,15 @@ class ImpPager {
     // Debug flag that controlls the debug output
     _debug = false;
 
-    constructor(connectionManager, bullwinkle = null, spiFlashLogger = null, debug = false) {
+    constructor(connectionManager, messageManager = null, spiFlashLogger = null, debug = false) {
         _connectionManager = connectionManager;
 
-        _bullwinkle = bullwinkle ? bullwinkle : Bullwinkle({"messageTimeout" : IMP_PAGER_MESSAGE_TIMEOUT});
+        _messageManager = messageManager ? messageManager : MessageManager({"messageTimeout" : IMP_PAGER_MESSAGE_TIMEOUT});
         _spiFlashLogger = spiFlashLogger ? spiFlashLogger : SPIFlashLogger();
+
+        // Set MessageManager listeners
+        _messageManager.onAck(_onAck.bindenv(this))
+        _messageManager.onFail(_onFail.bindenv(this))
 
         // Set ConnectionManager listeners
         _connectionManager.onConnect(_onConnect.bindenv(this));
@@ -42,54 +44,40 @@ class ImpPager {
         _debug = debug;
     }
 
-    function send(messageName, data = null) {
-        _send(messageName, data);
+    function send(messageName, data = null, metadata = null) {
+        return _messageManager.send(messageName, data, IMP_PAGER_MESSAGE_TIMEOUT, metadata);
     }
 
-    function _onSuccess(message) {
+    function _onAck(message) {
         // Do nothing
-        _log_debug("ACKed message name: '" + message.name + "', data: " + message.data);
+        _log_debug("ACKed message name: '" + message.payload.name + "', data: " + message.payload.data);
         if ("metadata" in message && "addr" in message.metadata && message.metadata.addr) {
             local addr = message.metadata.addr;
             _spiFlashLogger.erase(addr);
-            delete message.metadata;
+            message.metadata.addr = null;
             _scheduleRetryIfConnected();
         }
     }
 
-    function _onFail(err, message, retry) {
-        _log_debug("Failed to deliver message name: '" + message.name + "', data: " + message.data + ", err: " + err);
+    function _onFail(message, reason, retry) {
+        _log_debug("Failed to deliver message name: '" + message.name + "', data: " + message.data + ", error: " + reason);
         // On fail write the message to the SPI Flash for further processing
         // only if it's not already there.
         if (!("metadata" in message) || !("addr" in message.metadata) || !(message.metadata.addr)) {
-            _spiFlashLogger.write(message);
+            local savedMsg = {
+                "name" : payload.name,
+                "data" : payload.data
+            }
+            _spiFlashLogger.write(savedMsg);
         }
         _scheduleRetryIfConnected();
-    }
-
-    function _send(messageName, data) {
-        return _bullwinkle.send(messageName, data)
-            .onSuccess(_onSuccess.bindenv(this))
-            .onFail(_onFail.bindenv(this));
-    }
-
-    // This is a hack to resend the message with metainformation
-    function _resendExistingMessage(message) {
-        _log_debug("Resending message name: '" + message.name + "', message: " + message.data);
-        local package = Bullwinkle.Package(message)
-            .onSuccess(_onSuccess.bindenv(this))
-            .onFail(_onFail.bindenv(this));
-        message.ts = time();
-        message.type = BULLWINKLE_MESSAGE_TYPE.SEND;
-        _bullwinkle._packages[message.id] <- package;
-        _bullwinkle._sendMessage(message);
     }
 
     function _retry() {
         _log_debug("Start processing pending messages...");
         _spiFlashLogger.read(
-            function(dataPoint, addr, next) {
-                _log_debug("Reading from the SPI Flash. Data: " + dataPoint.data + " at addr: " + addr);
+            function(savedMsg, addr, next) {
+                _log_debug("Reading from the SPI Flash. Data: " + savedMsg.data + " at addr: " + addr);
 
                 // There's no point of retrying to send pending messages when disconnected
                 if (!_connectionManager.isConnected()) {
@@ -98,10 +86,10 @@ class ImpPager {
                     next(false);
                     return;
                 }
-                // Save SPI Flash address in the message metadata
-                dataPoint.metadata <- {"addr" : addr};
-                _resendExistingMessage(dataPoint);
-                // Don't do any further scanning until we get an ACK for already sent message
+                _log_debug("Resending message name: '" + savedMsg.name + "', data: " + savedMsg.data);
+                send(savedMsg.name, savedMsg.data, {"addr" : addr});
+
+                // Don't do any further scanning until we get an ACK for the already sent message
                 next(false);
             }.bindenv(this),
             function() {
