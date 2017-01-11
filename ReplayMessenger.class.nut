@@ -2,10 +2,10 @@
 // This file is licensed under the MIT License
 // http://opensource.org/licenses/MIT
 
-const IMP_PAGER_MESSAGE_TIMEOUT    = 1;
-const IMP_PAGER_RETRY_INTERVAL_SEC = 0.5;
+const REPLAY_MESSENGER_MESSAGE_TIMEOUT_SEC = 5;
+const REPLAY_MESSENGER_RETRY_INTERVAL_SEC  = 0.5;
 
-class ImpPager {
+class ReplayMessenger {
 
     // MessageManager instance
     _mm = null;
@@ -34,9 +34,9 @@ class ImpPager {
     constructor(options = {}) {
 
         _cm            = "connectionManager" in options ? options["connectionManager"] : ConnectionManager();
-        _mm            = "messageManager"    in options ? options["messageManager"]    : MessageManager({"messageTimeout" : IMP_PAGER_MESSAGE_TIMEOUT});
+        _mm            = "messageManager"    in options ? options["messageManager"]    : MessageManager({"messageTimeout" : REPLAY_MESSENGER_MESSAGE_TIMEOUT_SEC});
         _spiFL         = "spiFlashLogger"    in options ? options["spiFlashLogger"]    : SPIFlashLogger();
-        _retryInterval = "retryInterval"     in options ? options["retryInterval"]     : IMP_PAGER_RETRY_INTERVAL_SEC;
+        _retryInterval = "retryInterval"     in options ? options["retryInterval"]     : REPLAY_MESSENGER_RETRY_INTERVAL_SEC;
         _debug         = "debug"             in options ? options["debug"]             : debug;
 
         // Set MessageManager listeners
@@ -65,9 +65,10 @@ class ImpPager {
 
     function _onAck(message) {
         // Do nothing
-        _log_debug("ACKed message name: '" + message.payload.name + "', data: " + message.payload.data);
+        _log("ACKed message name: '" + message.payload.name + "', data: " + message.payload.data);
         if ("metadata" in message && "addr" in message.metadata && message.metadata.addr) {
             local addr = message.metadata.addr;
+            _log("Erasing object at addreess: " + addr);
             _spiFL.erase(addr);
             message.metadata.addr = null;
             _scheduleRetryIfConnected();
@@ -76,7 +77,7 @@ class ImpPager {
 
     function _onFail(message, reason, retry) {
         local payload = message.payload
-        _log_debug("Failed to deliver message name: '" + payload.name + "', data: " + payload.data + ", error: " + reason);
+        _log("Failed to deliver message name: '" + payload.name + "', data: " + payload.data + ", error: " + reason);
         // On fail write the message to the SPI Flash for further processing
         // only if it's not already there.
         if (!("metadata" in message) || !("addr" in message.metadata) || !(message.metadata.addr)) {
@@ -90,32 +91,32 @@ class ImpPager {
     }
 
     function _retry() {
-        _log_debug("Start processing pending messages...");
+        _log("Start processing pending messages...");
         _spiFL.read(
             function(savedMsg, addr, next) {
-                _log_debug("Reading from the SPI Flash. Data: " + savedMsg.data + " at addr: " + addr);
+                _log("Reading from the SPI Flash. Data: " + savedMsg.data + " at addr: " + addr);
 
                 // There's no point of retrying to send pending messages when disconnected
                 if (!_cm.isConnected()) {
-                    _log_debug("No connection, abort SPI Flash scanning...");
+                    _log("No connection, abort SPI Flash scanning...");
                     // Abort scanning
                     next(false);
                     return;
                 }
-                _log_debug("Resending message name: '" + savedMsg.name + "', data: " + savedMsg.data);
+                _log("Resending message name: '" + savedMsg.name + "', data: " + savedMsg.data);
                 send(savedMsg.name, savedMsg.data, {"addr" : addr});
 
                 // Don't do any further scanning until we get an ACK for the already sent message
                 next(false);
             }.bindenv(this),
             function() {
-                _log_debug("Finished processing all pending messages");
+                _log("Finished processing all pending messages");
             }.bindenv(this)
         );
     }
 
     function _onConnect() {
-        _log_debug("onConnect: scheduling pending message processor...");
+        _log("onConnect: scheduling pending message processor...");
         _scheduleRetryIfConnected();
 
         if (_onConnHandler && typeof _onConnHandler == "function") {
@@ -124,7 +125,7 @@ class ImpPager {
     }
 
     function _onDisconnect(expected) {
-        _log_debug("onDisconnect: cancelling pending message processor...");
+        _log("onDisconnect: cancelling pending message processor...");
         // Stop any attempts to process pending messages while we are disconnected
         _cancelRetryTimer();
 
@@ -150,9 +151,9 @@ class ImpPager {
         _retryTimer = imp.wakeup(_retryInterval, _retry.bindenv(this));
     }
 
-    function _log_debug(str) {
+    function _log(str) {
         if (_debug) {
-            _cm.log(str);
+            _cm.log("  [RM] " + str);
         }
     }
 }
