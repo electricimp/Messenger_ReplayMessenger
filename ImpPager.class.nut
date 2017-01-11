@@ -75,7 +75,8 @@ class ImpPager {
     }
 
     function _onFail(message, reason, retry) {
-        _log_debug("Failed to deliver message name: '" + message.name + "', data: " + message.data + ", error: " + reason);
+        local payload = message.payload
+        _log_debug("Failed to deliver message name: '" + payload.name + "', data: " + payload.data + ", error: " + reason);
         // On fail write the message to the SPI Flash for further processing
         // only if it's not already there.
         if (!("metadata" in message) || !("addr" in message.metadata) || !(message.metadata.addr)) {
