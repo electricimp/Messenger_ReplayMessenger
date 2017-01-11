@@ -34,7 +34,10 @@ class ReplayMessenger {
     constructor(options = {}) {
 
         _cm            = "connectionManager" in options ? options["connectionManager"] : ConnectionManager();
-        _mm            = "messageManager"    in options ? options["messageManager"]    : MessageManager({"messageTimeout" : REPLAY_MESSENGER_MESSAGE_TIMEOUT_SEC});
+        _mm            = "messageManager"    in options ? options["messageManager"]    : MessageManager({
+            "messageTimeout"    : REPLAY_MESSENGER_MESSAGE_TIMEOUT_SEC,
+            "connectionManager" : _cm
+        });
         _spiFL         = "spiFlashLogger"    in options ? options["spiFlashLogger"]    : SPIFlashLogger();
         _retryInterval = "retryInterval"     in options ? options["retryInterval"]     : REPLAY_MESSENGER_RETRY_INTERVAL_SEC;
         _debug         = "debug"             in options ? options["debug"]             : debug;
@@ -106,8 +109,8 @@ class ReplayMessenger {
                 _log("Resending message name: '" + savedMsg.name + "', data: " + savedMsg.data);
                 send(savedMsg.name, savedMsg.data, {"addr" : addr});
 
-                // Don't do any further scanning until we get an ACK for the already sent message
-                next(false);
+                // Skip to next item
+                next();
             }.bindenv(this),
             function() {
                 _log("Finished processing all pending messages");
