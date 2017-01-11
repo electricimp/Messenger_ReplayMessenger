@@ -71,7 +71,7 @@ class ReplayMessenger {
         _log("ACKed message name: '" + message.payload.name + "', data: " + message.payload.data);
         if ("metadata" in message && "addr" in message.metadata && message.metadata.addr) {
             local addr = message.metadata.addr;
-            _log("Erasing object at addreess: " + addr);
+            _log("Erasing object at address: " + addr);
             _spiFL.erase(addr);
             message.metadata.addr = null;
             _scheduleRetryIfConnected();
