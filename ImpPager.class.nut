@@ -46,10 +46,6 @@ class ImpPager {
     // Debug flag that controlls the debug output
     _debug = false;
 
-    // Name that gets appended to special bullwinkle messages such as the IMP_PAGER_RESEND_COMPLETE, IMP_PAGER_SPIFLASH_DUMP_BEGIN, IMP_PAGER_SPIFLASH_DUMP_COMPLETE
-    // so that, on the Agent, handlers can be set up for individual ImpPagers
-    _name = null;
-
     constructor(connectionManager, options = {}) {
         _connectionManager = connectionManager;
 
