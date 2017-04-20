@@ -1,7 +1,29 @@
-// Copyright (c) 2016-2017 Electric Imp
-// This file is licensed under the MIT License
-// http://opensource.org/licenses/MIT
+// MIT License
+//
+// Copyright 2016-2017 Electric Imp
+//
+// SPDX-License-Identifier: MIT
+//
+// Permission is hereby granted, free of charge, to any person obtaining a copy
+// of this software and associated documentation files (the "Software"), to deal
+// in the Software without restriction, including without limitation the rights
+// to use, copy, modify, merge, publish, distribute, sublicense, and/or sell
+// copies of the Software, and to permit persons to whom the Software is
+// furnished to do so, subject to the following conditions:
+//
+// The above copyright notice and this permission notice shall be
+// included in all copies or substantial portions of the Software.
+//
+// THE SOFTWARE IS PROVIDED "AS IS", WITHOUT WARRANTY OF ANY KIND,
+// EXPRESS OR IMPLIED, INCLUDING BUT NOT LIMITED TO THE WARRANTIES OF
+// MERCHANTABILITY, FITNESS FOR A PARTICULAR PURPOSE AND NONINFRINGEMENT. IN NO
+// EVENT SHALL THE AUTHORS OR COPYRIGHT HOLDERS BE LIABLE FOR ANY CLAIM, DAMAGES
+// OR OTHER LIABILITY, WHETHER IN AN ACTION OF CONTRACT, TORT OR OTHERWISE,
+// ARISING FROM, OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR
+// OTHER DEALINGS IN THE SOFTWARE.
 
+
+const RM_TCP_ACK_TIMEOUT_SEC = 30;
 const RM_DEFAULT_MESSAGE_TIMEOUT_SEC = 5;
 const RM_DEFAULT_RETRY_INTERVAL_SEC  = 0.5;
 
@@ -33,7 +55,9 @@ class ReplayMessenger {
 
     constructor(options = {}) {
 
-        _cm            = "connectionManager" in options ? options["connectionManager"] : ConnectionManager();
+        _cm            = "connectionManager" in options ? options["connectionManager"] : ConnectionManager({
+            "ackTimeout" : RM_TCP_ACK_TIMEOUT_SEC
+        });
         _mm            = "messageManager"    in options ? options["messageManager"]    : MessageManager({
             "messageTimeout"    : RM_DEFAULT_MESSAGE_TIMEOUT_SEC,
             "connectionManager" : _cm
@@ -50,9 +74,6 @@ class ReplayMessenger {
         _cm.onConnect(_onConnect.bindenv(this));
         _cm.onDisconnect(_onDisconnect.bindenv(this));
 
-        // _spiFL.eraseAll(true);
-        // return;
-
         // Schedule routine to retry sending messages
         _scheduleRetryIfConnected();
     }
@@ -67,6 +88,10 @@ class ReplayMessenger {
 
     function onDisconnect(callback) {
         _onDiscHandler = callback;
+    }
+
+    function eraseAll() {
+        _spiFL.eraseAll(true);
     }
 
     function _onAck(message) {
