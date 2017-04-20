@@ -2,8 +2,8 @@
 // This file is licensed under the MIT License
 // http://opensource.org/licenses/MIT
 
-const REPLAY_MESSENGER_MESSAGE_TIMEOUT_SEC = 5;
-const REPLAY_MESSENGER_RETRY_INTERVAL_SEC  = 0.5;
+const RM_DEFAULT_MESSAGE_TIMEOUT_SEC = 5;
+const RM_DEFAULT_RETRY_INTERVAL_SEC  = 0.5;
 
 class ReplayMessenger {
 
@@ -35,11 +35,11 @@ class ReplayMessenger {
 
         _cm            = "connectionManager" in options ? options["connectionManager"] : ConnectionManager();
         _mm            = "messageManager"    in options ? options["messageManager"]    : MessageManager({
-            "messageTimeout"    : REPLAY_MESSENGER_MESSAGE_TIMEOUT_SEC,
+            "messageTimeout"    : RM_DEFAULT_MESSAGE_TIMEOUT_SEC,
             "connectionManager" : _cm
         });
         _spiFL         = "spiFlashLogger"    in options ? options["spiFlashLogger"]    : SPIFlashLogger();
-        _retryInterval = "retryInterval"     in options ? options["retryInterval"]     : REPLAY_MESSENGER_RETRY_INTERVAL_SEC;
+        _retryInterval = "retryInterval"     in options ? options["retryInterval"]     : RM_DEFAULT_RETRY_INTERVAL_SEC;
         _debug         = "debug"             in options ? options["debug"]             : debug;
 
         // Set MessageManager listeners
@@ -50,12 +50,15 @@ class ReplayMessenger {
         _cm.onConnect(_onConnect.bindenv(this));
         _cm.onDisconnect(_onDisconnect.bindenv(this));
 
+        // _spiFL.eraseAll(true);
+        // return;
+
         // Schedule routine to retry sending messages
         _scheduleRetryIfConnected();
     }
 
     function send(messageName, data = null, metadata = null) {
-        return _mm.send(messageName, data, _retryInterval, metadata);
+        return _mm.send(messageName, data, null, _retryInterval, metadata);
     }
 
     function onConnect(callback) {
@@ -97,9 +100,14 @@ class ReplayMessenger {
         _log("Start processing pending messages...");
         _spiFL.read(
             function(savedMsg, addr, next) {
+                if (!("data" in savedMsg) || !("name" in savedMsg)) {
+                    // _spiFL.erase(addr);
+                    next();
+                    return;
+                }
                 _log("Reading from the SPI Flash. Data: " + savedMsg.data + " at addr: " + addr);
 
-                // There's no point of retrying to send pending messages when disconnected
+                // There's no point of retrying to send pending messages when Ced
                 if (!_cm.isConnected()) {
                     _log("No connection, abort SPI Flash scanning...");
                     // Abort scanning
