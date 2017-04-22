@@ -36,6 +36,7 @@
 class BasicTests extends ImpTestCase {
 
     static MSG_COUNT = 50;
+    static LOGGER_COUNT = 3;
     static DATA_MSG_NAME  = "data";
     static INIT_MSG_NAME  = "init";
     static ERROR_MSG_NAME = "errors";
@@ -96,16 +97,26 @@ class BasicTests extends ImpTestCase {
         }.bindenv(this));
 
         // Create ReplayMessenger
+        local loggers = {
+            "0" : SPIFlashLogger(0,     40960),
+            "1" : SPIFlashLogger(40960, 81920),
+            "2" : SPIFlashLogger(81920, 122880)
+        }
+
+        assertEqual(LOGGER_COUNT, loggers.len(), "Number of loggers should be " + LOGGER_COUNT);
+
         local rmOptions = {
             "connectionManager" : _cm,
             "messageManager"    : _mm,
             "retryInterval"     : 1,
-            "debug"             : false
+            "debug"             : false,
+            "spiFlashLogger"    : loggers
         }
-        _rm = ReplayMessenger(rmOptions);
-        _rm.eraseAll();
 
-        _rm.send(INIT_MSG_NAME, MSG_COUNT);
+        _rm = ReplayMessenger(rmOptions);
+        // _rm.eraseAll();
+
+        _rm.send(INIT_MSG_NAME, MSG_COUNT, "1");
     }
 
     function testTempDisconnect() {
@@ -121,10 +132,12 @@ class BasicTests extends ImpTestCase {
                 _cm.connect();
             }
 
-            _rm.send(DATA_MSG_NAME, i);
+            local loggerIndex = i % LOGGER_COUNT;
+
+            _rm.send(DATA_MSG_NAME, i, loggerIndex.tostring());
         }
 
-        _rm.send(ERROR_MSG_NAME, null);
+        _rm.send(ERROR_MSG_NAME, null, "0");
 
         return Promise(function(resolve, reject) {
             imp.wakeup(20, function() {
