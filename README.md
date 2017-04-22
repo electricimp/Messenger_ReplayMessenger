@@ -30,11 +30,6 @@ default behaviours. *options* can contain any of the following keys:
 | *spiFlashLogger* | [SPIFlashLogger](https://github.com/electricimp/ConnectionManager) | `null` | Optional instance or array of instances of the [SPIFlashLogger](https://github.com/electricimp/SPIFlashLogger) library that helps ReplayManager to persist some messenger on a flash or a memory |
 
 
-```squirrel
-// Instantiate an Imp Pager
-impPager <- ImpPager(cm, null, null, false);
-```
-
 ### Class Methods
 
 #### send(*messageName, [data]*)
@@ -42,23 +37,11 @@ impPager <- ImpPager(cm, null, null, false);
 Sends the message of messageName with actual data. The method returns nothing.
 
 ```squirrel
-impPager <- ImpPager();
+rm <- ReplayMessenger();
 ... 
-impPager.send("data", data);
-```
-
-The method uses Bullwinkle.send method to send the data. So it may be received by the Bullwinkle on the agent side:
-
-```squirrel
-#require "bullwinkle.class.nut:2.3.1"
-
-bull <- Bullwinkle();
-
-bull.on("data", function(message, reply) {
-	server.log("Data received: " + message.data);
-});
+rm.send("data", data);
 ```
 
 # License
 
-The ImpPager library is licensed under the [MIT License](https://github.com/electricimp/thethingsapi/tree/master/LICENSE).
+The ReplayMessenger library is licensed under the [MIT License](https://github.com/electricimp/thethingsapi/tree/master/LICENSE).
