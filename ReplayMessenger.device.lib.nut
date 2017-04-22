@@ -84,7 +84,6 @@ class ReplayMessenger {
 
     function send(messageName, data = null, loggerName = "default", metadata = null) {
         if (!(loggerName in _spiFL)) {
-            server.log(loggerName);
             throw format("Logger \"%s\" does not exist", loggerName);
         }
         if (metadata == null) {
