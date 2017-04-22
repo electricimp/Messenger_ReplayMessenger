@@ -55,16 +55,20 @@ class ReplayMessenger {
 
     constructor(options = {}) {
 
-        _cm            = "connectionManager" in options ? options["connectionManager"] : ConnectionManager({
+        _cm = "connectionManager" in options ? options["connectionManager"] : ConnectionManager({
             "ackTimeout" : RM_TCP_ACK_TIMEOUT_SEC
         });
-        _mm            = "messageManager"    in options ? options["messageManager"]    : MessageManager({
-            "messageTimeout"    : RM_DEFAULT_MESSAGE_TIMEOUT_SEC,
-            "connectionManager" : _cm
+        _mm = "messageManager" in options ? options["messageManager"] : MessageManager({
+              "messageTimeout"    : RM_DEFAULT_MESSAGE_TIMEOUT_SEC,
+              "connectionManager" : _cm
         });
-        _spiFL         = "spiFlashLogger"    in options ? options["spiFlashLogger"]    : SPIFlashLogger();
-        _retryInterval = "retryInterval"     in options ? options["retryInterval"]     : RM_DEFAULT_RETRY_INTERVAL_SEC;
-        _debug         = "debug"             in options ? options["debug"]             : debug;
+        _debug = "debug" in options ? options["debug"] : debug;
+        _retryInterval = "retryInterval" in options ? options["retryInterval"] : RM_DEFAULT_RETRY_INTERVAL_SEC;
+
+        local spiFlashLogger = ("spiFlashLogger" in options) ? options["spiFlashLogger"] : SPIFlashLogger();
+        _spiFL = (typeof spiFlashLogger == "table") ? spiFlashLogger : {
+            "default" : spiFlashLogger
+        };
 
         // Set MessageManager listeners
         _mm.onAck(_onAck.bindenv(this))
@@ -78,7 +82,15 @@ class ReplayMessenger {
         _scheduleRetryIfConnected();
     }
 
-    function send(messageName, data = null, metadata = null) {
+    function send(messageName, data = null, loggerName = "default", metadata = null) {
+        if (!(loggerName in _spiFL)) {
+            server.log(loggerName);
+            throw format("Logger \"%s\" does not exist", loggerName);
+        }
+        if (metadata == null) {
+            metadata = {};
+        }
+        metadata["loggerName"] <- loggerName;
         return _mm.send(messageName, data, null, _retryInterval, metadata);
     }
 
@@ -91,16 +103,20 @@ class ReplayMessenger {
     }
 
     function eraseAll() {
-        _spiFL.eraseAll(true);
+        foreach (loggerName, logger in _spiFL) {
+            logger.eraseAll(true);
+        }
     }
 
     function _onAck(message) {
         // Do nothing
         _log("ACKed message name: '" + message.payload.name + "', data: " + message.payload.data);
-        if ("metadata" in message && "addr" in message.metadata && message.metadata.addr) {
+        if ("addr" in message.metadata && message.metadata.addr) {
             local addr = message.metadata.addr;
+            local logger = _spiFL[message.metadata.loggerName];
             _log("Erasing object at address: " + addr);
-            _spiFL.erase(addr);
+
+            logger.erase(addr);
             message.metadata.addr = null;
             _scheduleRetryIfConnected();
         }
@@ -111,44 +127,51 @@ class ReplayMessenger {
         _log("Failed to deliver message name: '" + payload.name + "', data: " + payload.data + ", error: " + reason);
         // On fail write the message to the SPI Flash for further processing
         // only if it's not already there.
-        if (!("metadata" in message) || !("addr" in message.metadata) || !(message.metadata.addr)) {
+        if (!("addr" in message.metadata) || !(message.metadata.addr)) {
             local savedMsg = {
                 "name" : payload.name,
                 "data" : payload.data
             }
-            _spiFL.write(savedMsg);
+            local logger = _spiFL[message.metadata.loggerName];
+            logger.write(savedMsg);
         }
         _scheduleRetryIfConnected();
     }
 
     function _retry() {
         _log("Start processing pending messages...");
-        _spiFL.read(
-            function(savedMsg, addr, next) {
-                if (!("data" in savedMsg) || !("name" in savedMsg)) {
-                    // _spiFL.erase(addr);
+
+        foreach (loggerName, logger in _spiFL) {
+            logger.read(
+                function(savedMsg, addr, next) {
+                    if (!("data" in savedMsg) || !("name" in savedMsg)) {
+                        // _spiFL.erase(addr);
+                        next();
+                        return;
+                    }
+                    _log("Reading from the SPI Flash. Data: " + savedMsg.data + " at addr: " + addr);
+
+                    // There's no point of retrying to send pending messages when Ced
+                    if (!_cm.isConnected()) {
+                        _log("No connection, abort SPI Flash scanning...");
+                        // Abort scanning
+                        next(false);
+                        return;
+                    }
+                    _log("Resending message name: '" + savedMsg.name + "', data: " + savedMsg.data);
+                    local metadata = {
+                        "addr" : addr
+                    };
+                    send(savedMsg.name, savedMsg.data, loggerName, metadata);
+
+                    // Skip to next item
                     next();
-                    return;
-                }
-                _log("Reading from the SPI Flash. Data: " + savedMsg.data + " at addr: " + addr);
-
-                // There's no point of retrying to send pending messages when Ced
-                if (!_cm.isConnected()) {
-                    _log("No connection, abort SPI Flash scanning...");
-                    // Abort scanning
-                    next(false);
-                    return;
-                }
-                _log("Resending message name: '" + savedMsg.name + "', data: " + savedMsg.data);
-                send(savedMsg.name, savedMsg.data, {"addr" : addr});
-
-                // Skip to next item
-                next();
-            }.bindenv(this),
-            function() {
-                _log("Finished processing all pending messages");
-            }.bindenv(this)
-        );
+                }.bindenv(this),
+                function() {
+                    _log("Finished processing all pending messages");
+                }.bindenv(this)
+            );
+        }
     }
 
     function _onConnect() {
