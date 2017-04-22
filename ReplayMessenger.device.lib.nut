@@ -24,7 +24,7 @@
 
 
 const RM_TCP_ACK_TIMEOUT_SEC = 30;
-const RM_DEFAULT_MESSAGE_TIMEOUT_SEC = 5;
+const RM_DEFAULT_MESSAGE_TIMEOUT_SEC = 10;
 const RM_DEFAULT_RETRY_INTERVAL_SEC  = 0.5;
 
 class ReplayMessenger {
@@ -59,8 +59,8 @@ class ReplayMessenger {
             "ackTimeout" : RM_TCP_ACK_TIMEOUT_SEC
         });
         _mm = "messageManager" in options ? options["messageManager"] : MessageManager({
-              "messageTimeout"    : RM_DEFAULT_MESSAGE_TIMEOUT_SEC,
-              "connectionManager" : _cm
+            "messageTimeout"    : RM_DEFAULT_MESSAGE_TIMEOUT_SEC,
+            "connectionManager" : _cm
         });
         _debug = "debug" in options ? options["debug"] : debug;
         _retryInterval = "retryInterval" in options ? options["retryInterval"] : RM_DEFAULT_RETRY_INTERVAL_SEC;
@@ -108,7 +108,6 @@ class ReplayMessenger {
     }
 
     function _onAck(message) {
-        // Do nothing
         _log("ACKed message name: '" + message.payload.name + "', data: " + message.payload.data);
         if ("addr" in message.metadata && message.metadata.addr) {
             local addr = message.metadata.addr;
