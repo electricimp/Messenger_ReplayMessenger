@@ -113,7 +113,7 @@ class ReplayMessenger {
       _beforeReplay[loggerName] <- callback;
     }
 
-    function afterReplay(loggerName, callback = null) {
+    function afterReplay(callback = null, loggerName = "default") {
       _afterReplay[loggerName] <- callback;
     }
 
