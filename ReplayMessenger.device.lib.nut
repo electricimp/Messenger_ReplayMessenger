@@ -117,12 +117,7 @@ class ReplayMessenger {
       _afterReplay[loggerName] <- callback;
     }
 
-    function setLoggerReadOptions(loggerName, options=null) {
-      if (typeof loggerName == "table" && options == null) { //assume these are the read options provided for the "default" logger
-        options = loggerName;
-        loggerName = "default";
-      }
-
+    function setLoggerReadOptions(options, loggerName = "default") {
       _readOptions[loggerName] <- options;
     }
 
