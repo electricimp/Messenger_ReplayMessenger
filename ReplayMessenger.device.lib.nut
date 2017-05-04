@@ -135,41 +135,47 @@ class ReplayMessenger {
         }
     }
 
-    function _onAck(message) {
-        if ("metadata" in message && "loggerName" in message.metadata) {
-            _log("ACKed message name: '" + message.payload.name + "', data: " + message.payload.data);
-            if ("addr" in message.metadata && message.metadata.addr) {
-                local addr = message.metadata.addr;
-                local logger = _spiFL[message.metadata.loggerName];
-                _log("Erasing object at address: " + addr);
+    function _isRecognized(message) {
+        return "metadata" in message && "loggerName" in message.metadata;
+    }
 
-                logger.erase(addr);
-                message.metadata.addr = null;
-                _scheduleRetryIfConnected();
-            }
+    function _onAck(message) {
+        if (!_isRecognized(message)) {
+            return; // skip messages not from ReplayMessenger
         }
+        _log("ACKed message name: '" + message.payload.name + "', data: " + message.payload.data);
+        if ("addr" in message.metadata && message.metadata.addr) {
+            local addr = message.metadata.addr;
+            local logger = _spiFL[message.metadata.loggerName];
+            _log("Erasing object at address: " + addr);
+
+            logger.erase(addr);
+            message.metadata.addr = null;
+        }
+        _scheduleRetryIfConnected();
     }
 
     function _onFail(message, reason, retry) {
-        if ("metadata" in message && "loggerName" in message.metadata) {
-            local payload = message.payload
-            _log("Failed to deliver message name: '" + payload.name + "', data: " + payload.data + ", error: " + reason);
-            // On fail write the message to the SPI Flash for further processing
-            // only if it's not already there.
-            if (!("addr" in message.metadata) || !(message.metadata.addr)) {
-                local savedMsg = {
-                    "name" :    payload.name,
-                    "data" :    payload.data,
-                    "metadata": message.metadata //add metadata to message because a user may have something important here
-                }
-
-                //TODO: Should we remove "loggerName" from metadata since it is redundant?
-
-                local logger = _spiFL[message.metadata.loggerName];
-                logger.write(savedMsg);
-            }
-            _scheduleRetryIfConnected();
+        if (!_isRecognized(message)) {
+            return; // skip messages not from ReplayMessenger
         }
+        local payload = message.payload
+        _log("Failed to deliver message name: '" + payload.name + "', data: " + payload.data + ", error: " + reason);
+        // On fail write the message to the SPI Flash for further processing
+        // only if it's not already there.
+        if (!("addr" in message.metadata) || !(message.metadata.addr)) {
+            local savedMsg = {
+                "name" :    payload.name,
+                "data" :    payload.data,
+                "metadata": message.metadata //add metadata to message because a user may have something important here
+            }
+
+            //TODO: Should we remove "loggerName" from metadata since it is redundant?
+
+            local logger = _spiFL[message.metadata.loggerName];
+            logger.write(savedMsg);
+        }
+        _scheduleRetryIfConnected();
     }
 
     function _retry() {
