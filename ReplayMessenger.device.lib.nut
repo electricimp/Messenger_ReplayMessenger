@@ -109,39 +109,11 @@ class ReplayMessenger {
         return _mm.send(messageName, data, null, _retryInterval, metadata);
     }
 
-    function beforeReplay(loggerName, callback = null) {
-      if (loggerName == null && callback == null) { //assume the user wants to de-register the callback for the "default" logger
-        loggerName = "default";
-      }
-
-      if (typeof loggerName == "string" && callback == null) { //de-register callback
-        if (loggerName in _beforeReplay) delete _beforeReplay[loggerName]
-        return;
-      }
-
-      if (typeof loggerName == "function" && callback == null) { //assume this is the callback provided for "default" logger
-        callback = loggerName;
-        loggerName = "default";
-      }
-
+    function beforeReplay(callback = null, loggerName = "default") {
       _beforeReplay[loggerName] <- callback;
     }
 
     function afterReplay(loggerName, callback = null) {
-      if (loggerName == null && callback == null) { //assume the user wants to de-register the callback for the "default" logger
-        loggerName = "default";
-      }
-
-      if (typeof loggerName == "string" && callback == null) { //de-register callback
-        if (loggerName in _afterReplay) delete _afterReplay[loggerName]
-        return;
-      }
-
-      if (typeof loggerName == "function" && callback == null) { //assume this is the callback provided for "default" logger
-        callback = loggerName;
-        loggerName = "default";
-      }
-
       _afterReplay[loggerName] <- callback;
     }
 
