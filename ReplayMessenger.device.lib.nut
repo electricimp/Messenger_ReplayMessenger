@@ -42,10 +42,10 @@ class ReplayMessenger {
     _readOptions = null;
 
     // Handlers to be called when we begin replaying data
-    _onReplayBegin = null;
+    _beforeReplay = null;
 
     // Handlers to be called when we finish replaying data
-    _onReplayComplete = null;
+    _afterReplay = null;
 
     // Message retry timer
     _retryTimer = null;
@@ -64,8 +64,8 @@ class ReplayMessenger {
 
     constructor(options = {}) {
 
-        _onReplayBegin = {};
-        _onReplayComplete = {};
+        _beforeReplay = {};
+        _afterReplay = {};
         _readOptions = {};
 
         _cm = "connectionManager" in options ? options["connectionManager"] : ConnectionManager({
@@ -109,34 +109,44 @@ class ReplayMessenger {
         return _mm.send(messageName, data, null, _retryInterval, metadata);
     }
 
-    function onReplayBegin(loggerName, callback = null) {
-      if (callback == null && typeof loggerName == "string") { //de-register callback
-        if (loggerName in _onReplayBegin) {
-          delete _onReplayBegin[loggerName]
-        }
-      } else if (callback == null) { //assume callback is provided for "default" logger
+    function beforeReplay(loggerName, callback = null) {
+      if (loggerName == null && callback == null) { //assume the user wants to de-register the callback for the "default" logger
+        loggerName = "default";
+      }
+
+      if (typeof loggerName == "string" && callback == null) { //de-register callback
+        if (loggerName in _beforeReplay) delete _beforeReplay[loggerName]
+        return;
+      }
+
+      if (typeof loggerName == "function" && callback == null) { //assume this is the callback provided for "default" logger
         callback = loggerName;
         loggerName = "default";
-      } else {
-        _onReplayBegin[loggerName] <- callback;
       }
+
+      _beforeReplay[loggerName] <- callback;
     }
 
-    function onReplayComplete(loggerName, callback = null) {
-      if (callback == null && typeof loggerName == "string") { //de-register callback
-        if (loggerName in _onReplayComplete) {
-          delete _onReplayComplete[loggerName]
-        }
-      } else if (callback == null) { //assume callback is provided for "default" logger
+    function afterReplay(loggerName, callback = null) {
+      if (loggerName == null && callback == null) { //assume the user wants to de-register the callback for the "default" logger
+        loggerName = "default";
+      }
+
+      if (typeof loggerName == "string" && callback == null) { //de-register callback
+        if (loggerName in _afterReplay) delete _afterReplay[loggerName]
+        return;
+      }
+
+      if (typeof loggerName == "function" && callback == null) { //assume this is the callback provided for "default" logger
         callback = loggerName;
         loggerName = "default";
-      } else {
-        _onReplayComplete[loggerName] <- callback;
       }
+
+      _afterReplay[loggerName] <- callback;
     }
 
     function setLoggerReadOptions(loggerName, options=null) {
-      if (typeof loggerName == "table" && options == null) {
+      if (typeof loggerName == "table" && options == null) { //assume these are the read options provided for the "default" logger
         options = loggerName;
         loggerName = "default";
       }
@@ -200,8 +210,8 @@ class ReplayMessenger {
 
         foreach (loggerName, logger in _spiFL) {
 
-            if (loggerName in _onReplayBegin && typeof _onReplayBegin[loggerName] == "function") {
-              _onReplayBegin[loggerName]();
+            if (loggerName in _beforeReplay && typeof _beforeReplay[loggerName] == "function") {
+              _beforeReplay[loggerName]();
             }
 
             local step = (loggerName in _readOptions && "step" in _readOptions[loggerName] ? _readOptions[loggerName].step : 1);
@@ -241,8 +251,8 @@ class ReplayMessenger {
                 }.bindenv(this),
                 function() {
                     _log("Finished processing all pending messages");
-                    if (loggerName in _onReplayComplete && typeof _onReplayComplete[loggerName] == "function") {
-                      _onReplayComplete[loggerName]();
+                    if (loggerName in _afterReplay && typeof _afterReplay[loggerName] == "function") {
+                      _afterReplay[loggerName]();
                     }
                 }.bindenv(this),
                 step,
