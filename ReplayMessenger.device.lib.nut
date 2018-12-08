@@ -86,6 +86,7 @@ class ReplayMessenger {
         // Set MessageManager listeners
         _mm.onAck(_onAck.bindenv(this))
         _mm.onFail(_onFail.bindenv(this))
+        _mm.onTimeout(_onTimeout.bindenv(this))
 
         // Set ConnectionManager listeners
         _cm.onConnect(_onConnect.bindenv(this));
@@ -98,14 +99,12 @@ class ReplayMessenger {
         }
     }
 
-    function send(messageName, data = null, loggerName = "default", metadata = null) {
+    function send(messageName, data = null, loggerName = "default", metadata = {}) {
         if (!(loggerName in _spiFL)) {
             throw format("Logger \"%s\" does not exist", loggerName);
         }
-        if (metadata == null) {
-            metadata = {};
-        }
         metadata["loggerName"] <- loggerName;
+
         return _mm.send(messageName, data, null, _retryInterval, metadata);
     }
 
@@ -135,47 +134,61 @@ class ReplayMessenger {
         }
     }
 
-    function _isRecognized(message) {
-        return "metadata" in message && "loggerName" in message.metadata;
+    function _isRecognized(msg) {
+        return "metadata" in msg && "loggerName" in msg.metadata;
     }
 
-    function _onAck(message) {
-        if (!_isRecognized(message)) {
+    function _onAck(msg) {
+        if (!_isRecognized(msg)) {
             return; // skip messages not from ReplayMessenger
         }
-        _log("ACKed message name: '" + message.payload.name + "', data: " + message.payload.data);
-        if ("addr" in message.metadata && message.metadata.addr) {
-            local addr = message.metadata.addr;
-            local logger = _spiFL[message.metadata.loggerName];
+        _log("ACKed message name: '" + msg.payload.name + "', data: " + msg.payload.data);
+        if ("addr" in msg.metadata && msg.metadata.addr) {
+            local addr = msg.metadata.addr;
+            local logger = _spiFL[msg.metadata.loggerName];
             _log("Erasing object at address: " + addr);
 
             logger.erase(addr);
-            message.metadata.addr = null;
+            msg.metadata.addr = null;
         }
         _scheduleRetryIfConnected();
     }
 
-    function _onFail(message, reason, retry) {
-        if (!_isRecognized(message)) {
+    function _onTimeout(msg, wait, fail) {
+        _persisAndRetri(msg);
+    }
+
+    function _onFail(msg, reason, retry) {
+        _persisAndRetri(msg);
+    }
+
+    function _persisAndRetri(msg) {
+        _persist(msg);
+        _scheduleRetryIfConnected();
+    }
+
+    function _persist(msg) {
+        if (!_isRecognized(msg)) {
             return; // skip messages not from ReplayMessenger
         }
-        local payload = message.payload
-        _log("Failed to deliver message name: '" + payload.name + "', data: " + payload.data + ", error: " + reason);
-        // On fail write the message to the SPI Flash for further processing
+        local payload = msg.payload
+        _log("Persisting message name: '" + payload.name + "', data: " + payload.data);
+        // Write the message to the SPI Flash for further processing
         // only if it's not already there.
-        if (!("addr" in message.metadata) || !(message.metadata.addr)) {
+        if (!("addr" in msg.metadata) || !(msg.metadata.addr)) {
             local savedMsg = {
-                "name" :    payload.name,
-                "data" :    payload.data,
-                "metadata": message.metadata //add metadata to message because a user may have something important here
+                "n"  : payload.name,
+                "d"  : payload.data,
+                "md" : msg.metadata //add metadata to message because a user may have something important here
             }
 
-            //TODO: Should we remove "loggerName" from metadata since it is redundant?
-
-            local logger = _spiFL[message.metadata.loggerName];
+            //TODO: Should we remove "loggerName" from metadata at this point?
+            local logger = _spiFL[msg.metadata.loggerName];
             logger.write(savedMsg);
+            _log("Message is persisted successfully");
+        } else {
+            _log("Message is already persisted");
         }
-        _scheduleRetryIfConnected();
     }
 
     function _retry() {
@@ -192,12 +205,12 @@ class ReplayMessenger {
 
             logger.read(
                 function(savedMsg, addr, next) {
-                    if (!("data" in savedMsg) || !("name" in savedMsg)) {
+                    if (!("d" in savedMsg) || !("n" in savedMsg)) {
                         // _spiFL.erase(addr);
                         next();
                         return;
                     }
-                    _log("Reading from the SPI Flash. Data: " + savedMsg.data + " at addr: " + addr);
+                    _log("Reading from the SPI Flash. Data: " + savedMsg.d + " at addr: " + addr);
 
                     // There's no point of retrying to send pending messages when Ced
                     if (!_cm.isConnected()) {
@@ -208,16 +221,16 @@ class ReplayMessenger {
                     }
 
                     local metadata;
-                    if ("metadata" in savedMsg && typeof savedMsg.metadata == "table") {
-                      metadata = savedMsg.metadata;
+                    if ("md" in savedMsg && typeof savedMsg.md == "table") {
+                      metadata = savedMsg.md;
                     } else {
                       metadata = {};
                     }
 
                     metadata.addr <- addr;
 
-                    _log("Resending message name: '" + savedMsg.name + "', data: " + savedMsg.data);
-                    send(savedMsg.name, savedMsg.data, loggerName, metadata);
+                    _log("Resending message name: '" + savedMsg.n + "', data: " + savedMsg.d);
+                    send(savedMsg.n, savedMsg.d, loggerName, metadata);
 
                     // Skip to next item
                     next();
