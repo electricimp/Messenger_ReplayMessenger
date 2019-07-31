@@ -27,4 +27,3 @@ rm.on(MESSAGE_NAME_START, function(data, customAck) {
     rm.send("type2", MESSAGE_DATA_STRING);
     rm.send("type3", MESSAGE_DATA_TABLE);
 }.bindenv(this));
-

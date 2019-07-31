@@ -115,7 +115,12 @@ class ReplayMessengerExtended extends ReplayMessengerBase {
         if (!("firstMsgId" in options)) {
             // Find the maximum message Id on the flash and use it to initialize the Id generator
             // so that our next messages will not interfere (by Id) with pending ones from the flash memory
-            _nextId = _maxMsgId() + 1;
+            try {
+                _nextId = _maxMsgId() + 1;
+            } catch (e) {
+                throw "An error occurred during reading contents from the flash memory. " +
+                    "There may be some incompatible data. You probably need to erase it.";
+            }
         }
 
         _resendLimit = "resendLimit" in options ? options["resendLimit"] : RM_DEFAULT_RESEND_LIMIT;
