@@ -74,7 +74,7 @@ class OnFailTestCase extends CustomTestCase {
     }
 
     // This test needs more than default 30 sec timeout
-    function testOutOfMemoryFail(){
+    function testOutOfMemoryFail() {
         const LONG_ACK_TIMEOUT = 10000;
         const SEND_DELAY = 0.2;
         const CHECK_DELAY = 2.0;
@@ -96,7 +96,7 @@ class OnFailTestCase extends CustomTestCase {
                 local msg = rm.send(MESSAGE_NAME_NO_ACK, MESSAGE_DATA_STRING, RM_IMPORTANCE_CRITICAL, LONG_ACK_TIMEOUT);
                 sentMessages.push(msg.payload["id"]);
 
-                if(deletedMessages.len() == 0){
+                if (deletedMessages.len() == 0) {
                     imp.wakeup(SEND_DELAY, send);
                 } else {
                     imp.wakeup(CHECK_DELAY, check);
@@ -139,7 +139,7 @@ class OnFailTestCase extends CustomTestCase {
         // In loop synchronously get message payloads from flash and check its id
         while(messagePayload = rm._spiFL.readSync(count++)) {
             local msgFromFlash = rm._messageFromFlash(messagePayload, null);
-            if(msgFromFlash.payload.id == id) {
+            if (msgFromFlash.payload.id == id) {
                 return true;
             }
         }

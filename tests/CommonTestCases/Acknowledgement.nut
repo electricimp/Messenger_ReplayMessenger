@@ -27,7 +27,7 @@ class AcknowledgementTestCase extends CustomTestCase {
         return Promise(function(resolve, reject) {
             local message = null;
 
-            rm.onAck(function(msg, data){
+            rm.onAck(function(msg, data) {
                 this.assertDeepEqual(message, msg);
                 this.assertEqual(MESSAGE_DATA_STRING, data);
                 _checkMsgNotInSentQueue(msg);
@@ -42,7 +42,7 @@ class AcknowledgementTestCase extends CustomTestCase {
         return Promise(function(resolve, reject) {
             local message = null;
 
-            rm.onAck(function(msg, data){
+            rm.onAck(function(msg, data) {
                 this.assertDeepEqual(message, msg);
                 this.assertEqual(null, data);
                 _checkMsgNotInSentQueue(msg);
@@ -57,7 +57,7 @@ class AcknowledgementTestCase extends CustomTestCase {
         return Promise(function(resolve, reject) {
             local message = null;
 
-            rm.onAck(function(msg, data){
+            rm.onAck(function(msg, data) {
                 this.assertDeepEqual(message, msg);
                 this.assertEqual(null, data);
                 _checkMsgNotInSentQueue(msg);

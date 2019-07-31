@@ -44,10 +44,10 @@ class ConfirmResendTestCase extends CustomTestCase {
                 return true;
             }.bindenv(this));
 
-            rm.onAck(function(msg, data){
+            rm.onAck(function(msg, data) {
                 this.assertDeepEqual(message.payload, msg.payload);
                 // After the specified number of resends the message should be acked
-                if(sendsCounter == CONFIRM_RESEND_MSG_NUM_TO_ACK) {
+                if (sendsCounter == CONFIRM_RESEND_MSG_NUM_TO_ACK) {
                     resolve();
                 } else {
                     reject();

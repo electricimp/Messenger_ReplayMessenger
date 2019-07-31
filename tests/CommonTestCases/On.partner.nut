@@ -22,7 +22,7 @@
 // ARISING FROM, OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR
 // OTHER DEALINGS IN THE SOFTWARE.
 
-rm.on(MESSAGE_NAME_START, function(data, customAck){
+rm.on(MESSAGE_NAME_START, function(data, customAck) {
     rm.send("type1", MESSAGE_DATA_INT);
     rm.send("type2", MESSAGE_DATA_STRING);
     rm.send("type3", MESSAGE_DATA_TABLE);

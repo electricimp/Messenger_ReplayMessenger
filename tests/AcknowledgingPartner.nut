@@ -24,25 +24,25 @@
 
 @include __PATH__ + "/SetupBase.nut"
 
-local noAckCallback = function(msg, customAck){
+local noAckCallback = function(msg, customAck) {
     // We cancel the auto-ack and don't send any ack at all
     customAck();
 }
 rm.on(MESSAGE_NAME_NO_ACK, noAckCallback);
 
-local emptyCustomAckCallback = function(msg, customAck){
+local emptyCustomAckCallback = function(msg, customAck) {
     local ack = customAck();
     ack();
 }
 rm.on(MESSAGE_NAME_EMPTY_CUSTOM_ACK, emptyCustomAckCallback);
 
-local customAckCallback = function(msg, customAck){
+local customAckCallback = function(msg, customAck) {
     local ack = customAck();
     ack(MESSAGE_DATA_STRING);
 }
 rm.on(MESSAGE_NAME_CUSTOM_ACK, customAckCallback);
 
-local ackCallback = function(msg,customAck){
+local ackCallback = function(msg,customAck) {
     //Do nothing and send auto-ack
 }
 rm.on(MESSAGE_NAME_ACK, ackCallback);

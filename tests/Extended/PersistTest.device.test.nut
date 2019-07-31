@@ -42,7 +42,7 @@ class PersistTestCase extends CustomTestCase {
         }.bindenv(this));
     }
 
-    function testImportanceMedium(){
+    function testImportanceMedium() {
         return Promise(function(resolve, reject) {
             rm.confirmResend(function(msg) {
                 this.assertTrue(_isMsgPersisted(msg));
@@ -96,7 +96,7 @@ class PersistTestCase extends CustomTestCase {
         // In loop synchronously get message payloads from flash and check its id
         while(messagePayload = rm._spiFL.readSync(count++)) {
             local msgFromFlash = rm._messageFromFlash(messagePayload, null);
-            if(msgFromFlash.payload.id == id) {
+            if (msgFromFlash.payload.id == id) {
                 return true;
             }
         }

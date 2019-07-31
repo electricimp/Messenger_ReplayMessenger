@@ -66,17 +66,17 @@ class ConstructorTestCase extends ImpTestCase {
     function testExtendedConstructorArgs() {
         const DEBUG_ENABLE = 1;
 
-        this.assertThrowsError(function(){
+        this.assertThrowsError(function() {
             ReplayMessengerExtended(logger, null, {"debug" : DEBUG_ENABLE,
                                          "ackTimeout" : ACK_TIMEOUT_TEST});
         }.bindenv(this), this);
 
-        this.assertThrowsError(function(){
+        this.assertThrowsError(function() {
             ReplayMessengerExtended(null, cm, {"debug" : DEBUG_ENABLE,
                                          "ackTimeout" : ACK_TIMEOUT_TEST});
         }.bindenv(this), this);
 
-        this.assertThrowsError(function(){
+        this.assertThrowsError(function() {
             ReplayMessengerExtended(null, null, {"debug" : DEBUG_ENABLE,
                                          "ackTimeout" : ACK_TIMEOUT_TEST});
         }.bindenv(this), this);

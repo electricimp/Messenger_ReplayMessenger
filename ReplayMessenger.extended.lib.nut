@@ -173,7 +173,7 @@ class ReplayMessengerExtended extends ReplayMessengerBase {
     // Sends the message (and immediately persists it if needed) and restarts the timer for processing the queues
     function _send(msg) {
         // Check if the message has importance = RM_IMPORTANCE_CRITICAL and not yet persisted
-        if(msg._importance == RM_IMPORTANCE_CRITICAL && !_isMsgPersisted(msg)) {
+        if (msg._importance == RM_IMPORTANCE_CRITICAL && !_isMsgPersisted(msg)) {
             _persistMessage(msg);
         }
 
@@ -190,7 +190,7 @@ class ReplayMessengerExtended extends ReplayMessengerBase {
             local msg = _sentQueue[id];
 
             // If the message is persisted, erase it from the flash
-            if(_isMsgPersisted(msg)) {
+            if (_isMsgPersisted(msg)) {
                 _safeEraseMsg(id, msg);
             } else if (msg._importance >= RM_IMPORTANCE_HIGH) {
                 // The message can also be in _persistMessagesQueue.
@@ -206,7 +206,7 @@ class ReplayMessengerExtended extends ReplayMessengerBase {
 
             // Check if there is some data sent along with the acknowledgement
             local data = null;
-            if("data" in payload) {
+            if ("data" in payload) {
                 data = payload.data;
             }
 
@@ -223,17 +223,17 @@ class ReplayMessengerExtended extends ReplayMessengerBase {
         _log("Failed to send or haven't received Ack. Id: " + id + " Reason: " + error);
 
         // If importance is RM_IMPORTANCE_HIGH, persist the message if not yet
-        if(msg._importance == RM_IMPORTANCE_HIGH && !_isMsgPersisted(msg)) {
+        if (msg._importance == RM_IMPORTANCE_HIGH && !_isMsgPersisted(msg)) {
             _persistMessage(msg);
         }
 
-        if(id in _sentQueue) {
+        if (id in _sentQueue) {
             delete _sentQueue[id];
         }
 
         // Call onFail if message importance is RM_IMPORTANCE_LOW
-        if(msg._importance == RM_IMPORTANCE_LOW) {
-            if(_isFunction(_onFail)) {
+        if (msg._importance == RM_IMPORTANCE_LOW) {
+            if (_isFunction(_onFail)) {
                 _onFail(msg, error);
             }
         }
@@ -266,7 +266,7 @@ class ReplayMessengerExtended extends ReplayMessengerBase {
     // If not, adds the message to the _persistMessagesQueue queue (if `enqueue` is `true`).
     // Returns true if the message has been persisted, otherwise false
     function _persistMessage(msg, enqueue = true) {
-        if(_cleanupNeeded) {
+        if (_cleanupNeeded) {
             if (enqueue) {
                 _log("Message added to the queue to be persisted later. Id: " + msg.payload.id);
                 _persistMessagesQueue.push(msg);
@@ -372,7 +372,7 @@ class ReplayMessengerExtended extends ReplayMessengerBase {
                 _spiFL.erase(address);
                 msg._address = null;
 
-                if(_isFunction(_onFail)) {
+                if (_isFunction(_onFail)) {
                     _onFail(msg, RM_ERR_OUT_OF_MEMORY);
                 }
 
@@ -386,7 +386,7 @@ class ReplayMessengerExtended extends ReplayMessengerBase {
     // Tries to resend the message if possible and needed. If resending is not confirmed, erases the message
     // Returns true if the resending was possible and the next message should be handled
     function _resendPersistedMsg(address, id, msg) {
-        if(!_cm.isConnected() || !_checkResendLimits()) {
+        if (!_cm.isConnected() || !_checkResendLimits()) {
             return false;
         }
 
@@ -405,7 +405,7 @@ class ReplayMessengerExtended extends ReplayMessengerBase {
             _spiFL.erase(address);
             msg._address = null;
 
-            if(_isFunction(_onFail)) {
+            if (_isFunction(_onFail)) {
                 _onFail(msg, RM_ERR_NOT_CONFIRMED);
             }
         }
@@ -473,7 +473,7 @@ class ReplayMessengerExtended extends ReplayMessengerBase {
         if (_spiFL.getPosition() + payloadSize <= nextSector) {
             return true;
         } else {
-            if(nextSector == _flDimensions["end"]) {
+            if (nextSector == _flDimensions["end"]) {
                 nextSector = _flDimensions["start"];
             }
 

@@ -26,12 +26,12 @@
 
 local messageCounter = 0;
 
-local customAckCallback = function(msg, customAck){
+local customAckCallback = function(msg, customAck) {
     // Cancel the auto-ack
     local ack = customAck();
 
     messageCounter++;
-    if(messageCounter == CONFIRM_RESEND_MSG_NUM_TO_ACK) {
+    if (messageCounter == CONFIRM_RESEND_MSG_NUM_TO_ACK) {
         ack();
         // Reset the counter to get ready for next tests
         messageCounter = 0;

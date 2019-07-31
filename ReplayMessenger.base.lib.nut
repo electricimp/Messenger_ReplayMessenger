@@ -328,7 +328,7 @@ class ReplayMessengerBase {
 
             // Check if there is some data sent along with the acknowledgement
             local data = null;
-            if("data" in payload) {
+            if ("data" in payload) {
                 data = payload.data;
             }
 
@@ -398,11 +398,11 @@ class ReplayMessengerBase {
         local id = msg.payload.id;
         _log("Failed to send or haven't received Ack. Id: " + id + " Reason: " + error);
 
-        if(id in _sentQueue) {
+        if (id in _sentQueue) {
             delete _sentQueue[id];
         }
 
-        if(_isFunction(_onFail)) {
+        if (_isFunction(_onFail)) {
             _onFail(msg, error);
         }
     }
