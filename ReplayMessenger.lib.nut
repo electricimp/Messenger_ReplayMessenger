@@ -43,9 +43,9 @@ const RM_ERR_NO_CONNECTION          = "No connection";
 const RM_ERR_ACK_TIMEOUT            = "Ack timeout";
 const RM_ERR_RATE_LIMIT_EXCEEDED    = "Maximum sending rate exceeded";
 
-class ReplayMessengerBase {
+class ReplayMessenger {
 
-    static VERSION = "1.0.0";
+    static VERSION = "0.1.0";
 
     _debug = false;
 
@@ -139,12 +139,12 @@ class ReplayMessengerBase {
     }
 
     /**
-    * ReplayMessengerBase constructor.
+    * ReplayMessenger constructor.
     *
     * @constructor
     * @param {table} [options] - Key-value table with optional settings.
     *
-    * @return {ReplayMessengerBase} ReplayMessengerBase instance created.
+    * @return {ReplayMessenger} ReplayMessenger instance created.
     */
     function constructor(options = {}) {
         // Read configuration
@@ -476,6 +476,6 @@ class ReplayMessengerBase {
     }
 
     function _typeof() {
-        return "ReplayMessengerBase";
+        return "ReplayMessenger";
     }
 }

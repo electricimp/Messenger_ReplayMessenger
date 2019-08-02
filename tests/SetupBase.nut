@@ -22,4 +22,4 @@
 // ARISING FROM, OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR
 // OTHER DEALINGS IN THE SOFTWARE.
 
-rm <- ReplayMessengerBase({"ackTimeout" : ACK_TIMEOUT_TEST});
+rm <- ReplayMessenger({"ackTimeout" : ACK_TIMEOUT_TEST});

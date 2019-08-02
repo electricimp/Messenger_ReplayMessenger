@@ -34,7 +34,7 @@ class CustomTestCase extends ImpTestCase {
         cm = ConnectionManager();
         cm.connect();
 
-        rm = ReplayMessengerExtended(logger, cm, {"ackTimeout" : ACK_TIMEOUT_TEST});
+        rm = ReplayMessengerPersist(logger, cm, {"ackTimeout" : ACK_TIMEOUT_TEST});
     }
 
     function tearDown() {
