@@ -1,0 +1,14 @@
+{
+  "deviceGroupId": "bf26fe6d-056c-e6c7-3ec7-aa3e12842b46",
+  "timeout": 300,
+  "stopOnFail": false,
+  "allowDisconnect": true,
+  "builderCache": false,
+  "testFiles": [
+    "./*/*.test.nut",
+    "*.test.nut",
+    "tests/**/*.test.nut"
+  ],
+  "deviceFile": "DeviceIncludes.nut",
+  "agentFile": "AgentIncludes.nut"
+}
