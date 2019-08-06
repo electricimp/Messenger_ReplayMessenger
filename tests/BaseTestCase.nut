@@ -26,6 +26,6 @@ class CustomTestCase extends ImpTestCase {
     rm = null;
 
     function setUp() {
-        rm = ReplayMessenger({"ackTimeout" : ACK_TIMEOUT_TEST});
+        rm = Messenger({"ackTimeout" : ACK_TIMEOUT_TEST});
     }
 }

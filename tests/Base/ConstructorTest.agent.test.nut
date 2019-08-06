@@ -30,7 +30,7 @@ class ConstructorTestCase extends ImpTestCase {
         const MAX_RATE_TEST = 12;
         const DEBUG_ENABLE = 1;
 
-        rm = ReplayMessenger({
+        rm = Messenger({
             "debug" : DEBUG_ENABLE,
             "ackTimeout" : ACK_TIMEOUT_TEST,
             "firstMsgId" : FIRST_MESSAGE_ID_TEST,
@@ -42,7 +42,7 @@ class ConstructorTestCase extends ImpTestCase {
         this.assertEqual(FIRST_MESSAGE_ID_TEST, rm._nextId);
         this.assertEqual(MAX_RATE_TEST, rm._maxRate);
 
-        rm = ReplayMessenger();
+        rm = Messenger();
         this.assertEqual(RM_DEFAULT_DEBUG, rm._debug);
         this.assertEqual(RM_DEFAULT_ACK_TIMEOUT_SEC, rm._ackTimeout);
         this.assertEqual(RM_DEFAULT_FIRST_MESSAGE_ID, rm._nextId);

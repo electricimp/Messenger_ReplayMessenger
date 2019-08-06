@@ -26,7 +26,7 @@
 @include "github:electricimp/SpiFlashLogger/SPIFlashLogger.device.lib.nut@v2.2.0"
 @include "github:electricimp/ConnectionManager/ConnectionManager.lib.nut@v3.1.1"
 
-@include __PATH__ + "/../ReplayMessenger.lib.nut"
-@include __PATH__ + "/../ReplayMessengerPersist.device.lib.nut"
+@include __PATH__ + "/../Messenger.lib.nut"
+@include __PATH__ + "/../ReplayMessenger.device.lib.nut"
 
 @include __PATH__ + "/Constants.nut"

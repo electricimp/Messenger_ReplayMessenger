@@ -43,7 +43,7 @@ const RM_ERR_NO_CONNECTION          = "No connection";
 const RM_ERR_ACK_TIMEOUT            = "Ack timeout";
 const RM_ERR_RATE_LIMIT_EXCEEDED    = "Maximum sending rate exceeded";
 
-class ReplayMessenger {
+class Messenger {
 
     static VERSION = "0.1.0";
 
@@ -124,7 +124,7 @@ class ReplayMessenger {
         *
         * @return {Message} Message object created
         */
-        function constructor(id, name, data, importance, ackTimeout, metadata, address = null) {
+        constructor(id, name, data, importance, ackTimeout, metadata, address = null) {
             payload = {
                 "id"  : id,
                 "type": RM_MESSAGE_TYPE_DATA,
@@ -136,17 +136,21 @@ class ReplayMessenger {
             this._ackTimeout = ackTimeout;
             this._address = address;
         }
+
+        function _typeof() {
+            return "A Messenger Message";
+        }
     }
 
     /**
-    * ReplayMessenger constructor.
+    * Messenger constructor.
     *
     * @constructor
     * @param {table} [options] - Key-value table with optional settings.
     *
-    * @return {ReplayMessenger} ReplayMessenger instance created.
+    * @return {Messenger} Messenger instance created.
     */
-    function constructor(options = {}) {
+    constructor(options = {}) {
         // Read configuration
         _debug      = "debug"       in options ? options["debug"]       : RM_DEFAULT_DEBUG;
         _ackTimeout = "ackTimeout"  in options ? options["ackTimeout"]  : RM_DEFAULT_ACK_TIMEOUT_SEC;
@@ -204,7 +208,7 @@ class ReplayMessenger {
     /**
     * Sets the name-specific message callback which will be called when a message with this name is received.
     *
-    * @param {string} name - The name of messages this clallback will be used for or `null` to register as the default handler.
+    * @param {string} name - The name of messages this callback will be used for or `null` to register as the default handler.
     * @param {onMsg} onMsg - The handler.
     */
     function on(name, onMsg) {
@@ -476,6 +480,6 @@ class ReplayMessenger {
     }
 
     function _typeof() {
-        return "ReplayMessenger";
+        return "Messenger";
     }
 }

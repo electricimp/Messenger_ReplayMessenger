@@ -40,7 +40,7 @@ const RM_ERR_OUT_OF_MEMORY = "Message has been erased. No free space on flash";
 const RM_ERR_NOT_CONFIRMED = "Resending has not been confirmed by the application";
 
 
-class ReplayMessengerPersist extends ReplayMessenger {
+class ReplayMessenger extends Messenger {
 
     // Generic handler to be called when a message is being "replayed" from the flash memory
     _confirmResend = null;
@@ -79,16 +79,16 @@ class ReplayMessengerPersist extends ReplayMessenger {
     _cleanupNeeded = null;
 
     /**
-    * ReplayMessengerPersist constructor.
+    * ReplayMessenger constructor.
     *
     * @constructor
     * @param {SPIFlashLogger} spiFlashLogger - Instance of spiFlashLogger which will be used to store messages.
     * @param {ConnectionManager} cm - Instance of ConnectionManager which will be used to check the connection state.
     * @param {table} [options] - Key-value table with optional settings.
     *
-    * @return {ReplayMessengerPersist} ReplayMessengerPersist instance created.
+    * @return {ReplayMessenger} ReplayMessenger instance created.
     */
-    function constructor(spiFlashLogger, cm, options = {}) {
+    constructor(spiFlashLogger, cm, options = {}) {
         // These constants are used during converting a message into a table before persisting
         // We should keep them short to minimize the footprint
         const RM_COMPRESSED_MSG_PAYLOAD     = "p";
@@ -562,6 +562,6 @@ class ReplayMessengerPersist extends ReplayMessenger {
     }
 
     function _typeof() {
-        return "ReplayMessengerPersist";
+        return "ReplayMessenger";
     }
 }

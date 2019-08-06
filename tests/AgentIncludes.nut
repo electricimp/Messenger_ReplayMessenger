@@ -22,6 +22,6 @@
 // ARISING FROM, OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR
 // OTHER DEALINGS IN THE SOFTWARE.
 
-@include __PATH__ + "/../ReplayMessenger.lib.nut"
+@include __PATH__ + "/../Messenger.lib.nut"
 
 @include __PATH__+"/Constants.nut"
