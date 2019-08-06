@@ -1,19 +1,19 @@
 # Messenger & ReplayMessenger #
 
-**Messenger**, the base library used for asynchronous bidirectional agent to device communication, and **ReplayMessenger**, if persistent storage and retry features are desired.
+The **Messenger** library contains the basic features for asynchronous bidirectional agent and device communication. The **ReplayMessenger** library can be added if persistent storage and retry features are desired.
 
-The **Messenger** library supports the following features:
+**Messenger** library supports the following features:
 - Sending/receiving of named messages
 - Acknowledgment of messages
 - Manual asynchronous acknowledgment of messages with optional reply data
 - Manual dis-acknowledgement of messages
 
-The **ReplayMessenger** library adds the following features:
+**ReplayMessenger** library adds the following features:
 - Persistence of unsent and unacknowledged messages  
 - Resending of persisted messages
 - Immediate persistence of critically important messages until they are both sent and acknowledged
 
-The **ReplayMessenger** library is only supported on the device, where messages can be persisted in SPI flash storage. **ReplayMessenger** extends the base **Messenger** library, therefore **Messenger** must be included before and in addition to the **ReplayMessenger** library. 
+**ReplayMessenger** is only supported on the device, where messages can be persisted in SPI flash storage. **ReplayMessenger** extends the base **Messenger** library, therefore **Messenger** must be included before and in addition to the **ReplayMessenger** library. 
 
 **To include Messenger library in your project, add the following to the top of your code** 
 
@@ -34,7 +34,15 @@ or
 
 ### Constructor: Messenger(*[options]*) ###
 
-Calling the Messenger constructor creates a new Messenger instance. An optional table can be passed into the constructor (as *options*) to override default behaviors. *options* can contain any of the following keys:
+Calling the Messenger constructor creates a new Messenger instance. An optional *options* table can be passed into the constructor to override default behaviors. 
+
+#### Parameters ####
+
+| Parameter | Type | Required? | Description |
+| --- | --- | --- | --- |
+| *options* | Table | No | An optional table with settings that override default behaviors. See [Options Table](#options-table) below for details. Default: `{}` |
+
+#### Options Table ####
 
 | Key | Data&nbsp;Type | Description |
 | ---- | --- | --- |
@@ -61,13 +69,13 @@ This method sends a named message to the partner side and returns an instance of
 | Parameter | Type | Required? | Description |
 | --- | --- | --- | --- |
 | *name* | String | Yes | Name of the message to be sent. |
-| *data* | Any serializable type | No | Data to be sent. Default: `null` |
+| *data* | Any serializable type | No | Data to be sent to the partner. Default: `null` |
 | *ackTimeout* | Integer | No | Individual message timeout. Default: `null` |
-| *metadata* | Any serializable type | No | Message metadata. Default: `null` |
+| *metadata* | Any serializable type | No | Message metadata. This data **WILL NOT** be sent to the partner. Default: `null` |
 
 #### Return Value ####
 
-A [Messenger's Message](#messengermessage-usage) class instance.
+A [Messenger.Message](#messengermessage-usage) class instance.
 
 #### Example ####
 
@@ -78,13 +86,13 @@ msngr.send("lights", true);
 
 ### on(*name, onMsg*) ###
 
-This method sets the name-specific message callback. The callback function is triggered when a message with the specified name is received from the partner (agent/device).  
+This method sets a name-specific message callback. The callback function is triggered when a message with the specified name is received from the partner (agent/device).  
 
 #### Parameters ####
 
 | Parameter | Type | Required? | Description |
 | --- | --- | --- | --- |
-| *name* | String | Yes | The name of messages this callback will be used for or `null` to register as the default handler. |
+| *name* | String | Yes | The name of the message with which the registered handler will be associated. |
 | *onMsg* | Function | Yes | Callback that is triggered when a message with the specified name is received. See [onMsg Callback](#onmsg-callback) below for function's details. |
 
 #### Return Value ####
@@ -99,7 +107,7 @@ The application defined callback that is triggered when a message received from 
 
 | Parameter | Type | Required? | Description |
 | --- | --- | --- | --- |
-| *message* | Table | Yes | Payload of the message received. See [Messenge'sr Message](#messengermessage-usage) for keys contained in a message's payload table. |
+| *message* | Table | Yes | Payload of the message received. See [Messenger.Message Payload Table](#payload-table) for payload table details. |
 | *customAck* | Function | Yes | A function that creates a custom acknowledgement function, when triggered in the **onMsg** callback it prevents the automatic message acknowledgement. See [customAck Callback](#customack-callback) for details. |
 
 #### customAck Callback ####
@@ -170,7 +178,7 @@ This method sets the default handler which will be called when a message doesn't
 
 | Parameter | Type | Required? | Description |
 | --- | --- | --- | --- |
-| *onMsg* | Function | Yes | Callback that is triggered when a message without an on handler is received. See [onMsg Callback](#onmsg-callback) for function's details. |
+| *onMsg* | Function | Yes | Callback that is triggered when a message without an **on** handler is received. See [onMsg Callback](#onmsg-callback) for function's details. |
 
 #### Return Value ####
 
@@ -218,8 +226,8 @@ The application defined function that that is triggered when a message is acknow
 
 | Parameter | Type | Required? | Description |
 | --- | --- | --- | --- |
-| *message* | A [Messenger's Message](#messengermessage-usage) instance | Yes | The [Messenger's Message](#messengermessage-usage) instance created and returned when message was sent. |
-| *ackData* | Any serializable type | Yes | Data sent in partner's acknowledgement, or `null` if no data was sent. |
+| *message* | A [Messenger.Message](#messengermessage-usage) instance | Yes | The [Messenger.Message](#messengermessage-usage) instance created and returned when the message was sent. |
+| *ackData* | Any serializable type | Yes | Data sent in partner's custom acknowledgement, or `null` if no data was sent. |
 
 #### Example ####
 
@@ -259,14 +267,14 @@ Nothing.
 
 #### onFailCallback ####
 
-The application defined callback function that that is triggered when a message fails.  
+The application defined callback function that is triggered when a message fails.  
 
 ##### onFailCallback Parameters #####
 
 | Parameter | Type | Required? | Description |
 | --- | --- | --- | --- |
-| *message* | A [Messenger's Message](#messengermessage-usage) instance | Yes | The [Messenger's Message](#messengermessage-usage) instance created and returned when message was sent. |
-| *reason* | String | Yes | The error description. |
+| *message* | A [Messenger.Message](#messengermessage-usage) instance | Yes | The [Messenger.Message](#messengermessage-usage) instance created and returned when message was sent. |
+| *reason* | String | Yes | The description of the message failure. |
 
 #### Example ####
 
@@ -290,37 +298,139 @@ msngr.onFail(onFail.bindenv(this));
 
 ## Messenger.Message Usage ##
 
-Messages should only be created by calling Messenger.send or ReplayMessenger.send methods, never by a user's application. The send method will return an instance of the Messenger's Message class. The message instance will also be passed to the global onAck and onFail callbacks.
+Messages should only be created by calling the **Messenger.send** or **ReplayMessenger.send** methods, never by a user's application. The send method will return an instance of this class. The message instance will also be passed to the global onAck and onFail callbacks.
 
 ### Public Properties ###
 
 The Message class doesn't contain any getters, however there are a couple of public properties that may want to be accessed and used. See *onAck* and *onFail* method examples for details.
 
-| Property Name | Type | Value | 
+| Property Name | Data&nbsp;Type | Value | 
 | --- | --- | --- |
 | *payload* | Table | A table that is sent between partners when the send method is called. See [Payload Table](#payload-table) below for table details. |
-| *metadata* | `null` or Table | An optional application defined table with additional message properties. This table **WILL NOT** be sent to the partner, but can be accessed when the *onAck* or *onFail* handler are triggered. | 
+| *metadata* | Any serializable type | Optional application defined data containing additional message properties. This data **WILL NOT** be sent to the partner, but can be accessed when the *onAck* or *onFail* handler are triggered. | 
 
 #### Payload Table ####
 
-| Key | Value | 
-| --- | --- | 
-| *id* | Message identifier, an auto-incrementing integer |
-| *name* | Name of message |
-| *data* | Message data |
+| Key | Data&nbsp;Type | Description |
+| --- | --- | --- | 
+| *id* | Integer | Message identifier, an auto-incrementing integer |
+| *name* | String | Name of message |
+| *data* | Any serializable type | Message data |
 
 ## ReplayMessenger Usage ##
 
-### Constructor: ReplayMessenger(*[options]*) ###
+**ReplayMessenger** extends the **Messenger** class adding features for resending and persisting messages. **ReplayMessenger** also has dependencies on [**SPIFlashLogger**](https://github.com/electricimp/SpiFlashLogger) and [**ConnectionManager**](https://github.com/electricimp/ConnectionManager) libraries. 
 
-Every message of the **ReplayMessenger** library part has a parameter called `importance`. This parameter can be one of the three different values:
+### Constructor: ReplayMessenger(*spiFlashLogger, cm[, options]*) ###
+
+Calling the **ReplayMessenger** constructor creates a new **ReplayMessenger** instance. 
+
+#### Parameters ####
+
+| Parameter | Type | Required? | Description |
+| --- | --- | --- | --- |
+| *spiFlashLogger* | Instance of spiFlashLogger | Yes | Instance of [spiFlashLogger library](https://github.com/electricimp/SpiFlashLogger) which will be used to store messages. Must include library v2.2.0 or above. |
+| *connectionManager* | Instance of ConnectionManager | Yes | Instance of [ConnectionManager](https://github.com/electricimp/ConnectionManager) which will be used to check the connection state. Must include library v3.1.0 or above. |
+| *options* | Table | No | An optional table with settings that override default behaviors. See [Options Table](#options-table) below for details. Default: `{}` |
+
+#### ReplayMessenger Options Table ####
+
+| Key | Data&nbsp;Type | Description |
+| ---- | --- | --- |
+| *debug* | Boolean | The flag that enables debug library mode, which turns on extended logging. Default: `false` |
+| *ackTimeout* | Integer | Changes the default timeout required before a message is considered failed (to be acknowledged). Default: 10s |
+| *maxRate* | Integer | Maximum message send rate, which defines the maximum number of messages the library allows to send per second. If the application exceeds the limit, the *onFail* callback is triggered. Default: 10 messages per second<br />**Note** please don’t change the value unless absolutely necessary |
+| *firstMsgId* | Integer | Initial value for the auto-incrementing message ID. Default: 0 |
+| *resendLimit* | Integer | Maximum number of messages to queue at any given time when "replaying". Default: 20 |
+
+#### Example ####
+
+```squirrel
+#require "SPIFlashLogger.device.lib.nut:2.2.0"
+#require "ConnectionManager.lib.nut:3.1.1"
+#require "Messenger.lib.nut:0.1.0"
+#require "ReplayMessenger.device.lib.nut:0.1.0"
+
+local sfl = SPIFlashLogger();
+local cm  = ConnectionManager({ "retryOnTimeout" : false });
+
+local rm  = ReplayMessenger(sfl, cm);
+```
+
+## ReplayMessenger Methods ##
+
+*ALL* methods documented in [Messenger Methods](#messenger-methods) section above are also available to **ReplayMessenger** instances, with one minor update to the *send* method and an additional *confirmResend* method. 
+
+### send(*name[, data][, importance][, ackTimeout][,metadata]*) ###
+
+This method sends a named message to the partner side and returns an instance of [Messenger's Message](#messengermessage-usage) class. 
+
+The *data* parameter can be a basic Squirrel type (`1`, `true`, `"A String"`) or more complex data structures such as an array or table, but it must be [a serializable Squirrel value](https://developer.electricimp.com/resources/serialisablesquirrel).
+
+Every message created by this method has an additional parameter called `importance`. This parameter can be one of the three different values:
 - `RM_IMPORTANCE_LOW` - (default) the message will not be persisted and resent
 - `RM_IMPORTANCE_HIGH` - the message will be persisted if it hasn't been sent successfully or hasn't been acknowledged within the timeout period
 - `RM_IMPORTANCE_CRITICAL` - the message will be persisted immediately
 
 Every persisted message will be resent (if resending is confirmed by the application). Every persisted message is removed from the storage once it is sent and acknowledged.
 
-The API is briefly described in the comments of the code (please, see [Messenger](./Messenger.lib.nut) and [ReplayMessenger](./ReplayMessenger.device.lib.nut)).
+#### Parameters ####
+
+| Parameter | Type | Required? | Description |
+| --- | --- | --- | --- |
+| *name* | String | Yes | Name of the message to be sent. |
+| *data* | Any serializable type | No | Data to be sent to the partner. Default: `null` |
+| *data* | Any serializable type | No | Data to be sent to the partner. Default: RM_IMPORTANCE_LOW |
+| *ackTimeout* | Integer | No | Individual message timeout. Default: `null` |
+| *metadata* | Any serializable type | No | Message metadata. This data **WILL NOT** be sent to the partner. Default: `null` |
+
+#### Return Value ####
+
+A [Messenger.Message](#messengermessage-usage) class instance.
+
+#### Example ####
+
+```squirrel
+// Turn on the lights
+rm.send("lights", true, RM_IMPORTANCE_HIGH);
+```
+
+### confirmResend(*confirmResendCallback*) ###
+
+This method sets a global callback to be called when **ReplayMessenger** is replaying a persisted message. The callback function should return `true` to confirm message resending or `false` to drop the message.
+
+#### Parameters ####
+
+| Parameter | Type | Required? | Description |
+| --- | --- | --- | --- |
+| *confirmResendCallback* | Function | Yes | Callback that is triggered when a message is "replayed" after it has been persisted. |
+
+#### Return Value ####
+
+Nothing.
+
+#### confirmResendCallback #### 
+
+The callback that is triggered when **ReplayMessenger** is replaying a persisted message.
+
+##### confirmResendCallback Parameters #####
+
+| Parameter | Type | Required? | Description |
+| --- | --- | --- | --- |
+| *message* | A [Messenger.Message](#messengermessage-usage) instance | Yes | The [Messenger.Message](#messengermessage-usage) instance created and returned when the message was sent. |
+
+##### confirmResendCallback Return Value #####
+
+Boolean, `true` to confirm message resending or `false` to drop the message.
+
+#### Example ####
+
+```squirrel
+rm.confirmResend(function(msg) {
+    // Resend all messages until they are acknowledged
+    return true;
+});
+```
 
 ## Testing ##
 
@@ -328,4 +438,4 @@ Tests for the library are provided in the [tests](./tests) directory.
 
 ## License ##
 
-This library is licensed under the [MIT License](./LICENSE).
+These libraries are licensed under the [MIT License](./LICENSE).
