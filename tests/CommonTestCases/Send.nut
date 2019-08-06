@@ -27,7 +27,7 @@ class SendTestCase extends CustomTestCase {
 
     function setUp() {
         base.setUp();
-        isBaseRM = typeof rm == "ReplayMessenger";
+        isBaseRM = typeof rm == "Messenger";
     }
 
     function testSend() {

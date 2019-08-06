@@ -41,7 +41,7 @@ class ConstructorTestCase extends ImpTestCase {
         const RESEND_LIMIT_TEST = 16;
         const DEBUG_ENABLE = 1;
 
-        rm = ReplayMessengerPersist(logger, cm, {
+        rm = ReplayMessenger(logger, cm, {
             "debug" : DEBUG_ENABLE,
             "ackTimeout" : ACK_TIMEOUT_TEST,
             "firstMsgId" : FIRST_MESSAGE_ID_TEST,
@@ -55,7 +55,7 @@ class ConstructorTestCase extends ImpTestCase {
         this.assertEqual(MAX_RATE_TEST, rm._maxRate);
         this.assertEqual(RESEND_LIMIT_TEST, rm._resendLimit);
 
-        rm = ReplayMessengerPersist(logger, cm);
+        rm = ReplayMessenger(logger, cm);
         this.assertEqual(RM_DEFAULT_DEBUG, rm._debug);
         this.assertEqual(RM_DEFAULT_ACK_TIMEOUT_SEC, rm._ackTimeout);
         this.assertEqual(RM_DEFAULT_FIRST_MESSAGE_ID, rm._nextId);
@@ -67,17 +67,17 @@ class ConstructorTestCase extends ImpTestCase {
         const DEBUG_ENABLE = 1;
 
         this.assertThrowsError(function() {
-            ReplayMessengerPersist(logger, null, {"debug" : DEBUG_ENABLE,
+            ReplayMessenger(logger, null, {"debug" : DEBUG_ENABLE,
                                          "ackTimeout" : ACK_TIMEOUT_TEST});
         }.bindenv(this), this);
 
         this.assertThrowsError(function() {
-            ReplayMessengerPersist(null, cm, {"debug" : DEBUG_ENABLE,
+            ReplayMessenger(null, cm, {"debug" : DEBUG_ENABLE,
                                          "ackTimeout" : ACK_TIMEOUT_TEST});
         }.bindenv(this), this);
 
         this.assertThrowsError(function() {
-            ReplayMessengerPersist(null, null, {"debug" : DEBUG_ENABLE,
+            ReplayMessenger(null, null, {"debug" : DEBUG_ENABLE,
                                          "ackTimeout" : ACK_TIMEOUT_TEST});
         }.bindenv(this), this);
     }
