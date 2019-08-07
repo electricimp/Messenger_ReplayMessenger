@@ -40,9 +40,9 @@ Calling the Messenger constructor creates a new Messenger instance. An optional 
 
 | Parameter | Type | Required? | Description |
 | --- | --- | --- | --- |
-| *options* | Table | No | An optional table with settings that override default behaviors. See [Options Table](#options-table) below for details. Default: `{}` |
+| *options* | Table | No | An optional table with settings that override default behaviors. See [Messenger Options Table](#messenger-options-table) below for details and defaults. |
 
-#### Options Table ####
+#### Messenger Options Table ####
 
 | Key | Data&nbsp;Type | Description |
 | ---- | --- | --- |
@@ -245,7 +245,7 @@ function onAck(message, ackData) {
     // Log message ack data if any
     if (ackData != null) server.log(ackData);
 
-    // TODO: Create switch statement to handle acks for specific messages
+    // TODO: Create switch statement to handle ACKs for specific messages based on id, name, data or metadata
 } 
 
 msngr.onAck(onAck.bindenv(this));
@@ -290,7 +290,7 @@ function onFail(message, reason) {
     // Log message info
     server.error("Message " + name + " with id " + id + " send failure reason: " reason);
 
-    // TODO: Create switch statement to handle failures for specific messages
+    // TODO: Create switch statement to handle failures for specific messages based on id, name, data or metadata
 } 
 
 msngr.onFail(onFail.bindenv(this));
@@ -321,7 +321,7 @@ The Message class doesn't contain any getters, however there are a couple of pub
 
 **ReplayMessenger** extends the **Messenger** class adding features for resending and persisting messages. **ReplayMessenger** also has dependencies on [**SPIFlashLogger**](https://github.com/electricimp/SpiFlashLogger) and [**ConnectionManager**](https://github.com/electricimp/ConnectionManager) libraries. 
 
-### Constructor: ReplayMessenger(*spiFlashLogger, cm[, options]*) ###
+### Constructor: ReplayMessenger(*spiFlashLogger, connectionManager[, options]*) ###
 
 Calling the **ReplayMessenger** constructor creates a new **ReplayMessenger** instance. 
 
@@ -331,7 +331,7 @@ Calling the **ReplayMessenger** constructor creates a new **ReplayMessenger** in
 | --- | --- | --- | --- |
 | *spiFlashLogger* | Instance of spiFlashLogger | Yes | Instance of [spiFlashLogger library](https://github.com/electricimp/SpiFlashLogger) which will be used to store messages. Must include library v2.2.0 or above. |
 | *connectionManager* | Instance of ConnectionManager | Yes | Instance of [ConnectionManager](https://github.com/electricimp/ConnectionManager) which will be used to check the connection state. Must include library v3.1.0 or above. |
-| *options* | Table | No | An optional table with settings that override default behaviors. See [Options Table](#options-table) below for details. Default: `{}` |
+| *options* | Table | No | An optional table with settings that override default behaviors. See [ReplayMessenger Options Table](#replaymessenger-options-table) below for details and defaults. |
 
 #### ReplayMessenger Options Table ####
 
@@ -359,7 +359,7 @@ local rm  = ReplayMessenger(sfl, cm);
 
 ## ReplayMessenger Methods ##
 
-*ALL* methods documented in [Messenger Methods](#messenger-methods) section above are also available to **ReplayMessenger** instances, with one minor update to the *send* method and an additional *confirmResend* method. 
+*ALL* methods documented in the [Messenger Methods](#messenger-methods) section above are also available to **ReplayMessenger** instances, with one minor update to the *send* method and an additional *confirmResend* method. 
 
 ### send(*name[, data][, importance][, ackTimeout][,metadata]*) ###
 
@@ -426,7 +426,7 @@ Boolean, `true` to confirm message resending or `false` to drop the message.
 #### Example ####
 
 ```squirrel
-rm.confirmResend(function(msg) {
+rm.confirmResend(function(message) {
     // Resend all messages until they are acknowledged
     return true;
 });
