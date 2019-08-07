@@ -62,7 +62,7 @@ local msngr = Messenger();
 
 ### send(*name[, data][,ackTimeout][,metadata]*) ###
 
-This method sends a named message to the partner side and returns an instance of [Messenger's Message](#messengermessage-usage) class. The *data* parameter can be a basic Squirrel type (`1`, `true`, `"A String"`) or more complex data structures such as an array or table, but it must be [a serializable Squirrel value](https://developer.electricimp.com/resources/serialisablesquirrel).
+This method sends a named message to the partner side and returns an instance of [Messenger.Message](#messengermessage-usage) class. The *data* parameter can be a basic Squirrel type (`1`, `true`, `"A String"`) or more complex data structures such as an array or table, but it must be [a serializable Squirrel value](https://developer.electricimp.com/resources/serialisablesquirrel).
 
 #### Parameters ####
 
@@ -319,7 +319,7 @@ The Message class doesn't contain any getters, however there are a couple of pub
 
 ## ReplayMessenger Usage ##
 
-**ReplayMessenger** extends the **Messenger** class adding features for resending and persisting messages. **ReplayMessenger** also has dependencies on [**SPIFlashLogger**](https://github.com/electricimp/SpiFlashLogger) and [**ConnectionManager**](https://github.com/electricimp/ConnectionManager) libraries. 
+**ReplayMessenger** extends the **Messenger** class adding features for resending and persisting messages. **ReplayMessenger** also has dependencies on [**SpiFlashLogger**](https://github.com/electricimp/SpiFlashLogger) and [**ConnectionManager**](https://github.com/electricimp/ConnectionManager) libraries. 
 
 ### Constructor: ReplayMessenger(*spiFlashLogger, connectionManager[, options]*) ###
 
@@ -329,7 +329,7 @@ Calling the **ReplayMessenger** constructor creates a new **ReplayMessenger** in
 
 | Parameter | Type | Required? | Description |
 | --- | --- | --- | --- |
-| *spiFlashLogger* | Instance of spiFlashLogger | Yes | Instance of [spiFlashLogger library](https://github.com/electricimp/SpiFlashLogger) which will be used to store messages. Must include library v2.2.0 or above. |
+| *spiFlashLogger* | Instance of spiFlashLogger | Yes | Instance of [SpiFlashLogger library](https://github.com/electricimp/SpiFlashLogger) which will be used to store messages. Must include library v2.2.0 or above. |
 | *connectionManager* | Instance of ConnectionManager | Yes | Instance of [ConnectionManager](https://github.com/electricimp/ConnectionManager) which will be used to check the connection state. Must include library v3.1.0 or above. |
 | *options* | Table | No | An optional table with settings that override default behaviors. See [ReplayMessenger Options Table](#replaymessenger-options-table) below for details and defaults. |
 
@@ -363,7 +363,7 @@ local rm  = ReplayMessenger(sfl, cm);
 
 ### send(*name[, data][, importance][, ackTimeout][,metadata]*) ###
 
-This method sends a named message to the partner side and returns an instance of [Messenger's Message](#messengermessage-usage) class. 
+This method sends a named message to the partner side and returns an instance of [Messenger.Message](#messengermessage-usage) class. 
 
 The *data* parameter can be a basic Squirrel type (`1`, `true`, `"A String"`) or more complex data structures such as an array or table, but it must be [a serializable Squirrel value](https://developer.electricimp.com/resources/serialisablesquirrel).
 
