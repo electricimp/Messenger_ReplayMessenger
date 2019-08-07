@@ -340,7 +340,7 @@ Calling the **ReplayMessenger** constructor creates a new **ReplayMessenger** in
 | *debug* | Boolean | The flag that enables debug library mode, which turns on extended logging. Default: `false` |
 | *ackTimeout* | Integer | Changes the default timeout required before a message is considered failed (to be acknowledged). Default: 10s |
 | *maxRate* | Integer | Maximum message send rate, which defines the maximum number of messages the library allows to send per second. If the application exceeds the limit, the *onFail* callback is triggered. Default: 10 messages per second<br />**Note** please don’t change the value unless absolutely necessary |
-| *firstMsgId* | Integer | Initial value for the auto-incrementing message ID. Default: 0 |
+| *firstMsgId* | Integer | Initial value for the auto-incrementing message ID. When default is used the library will use persisted messages to determine a safe starting value. When overriding the default the application must define this value in such a way that it will not interfere with the currently persisted messages. Default: 0 or value based on persisted message Ids |
 | *resendLimit* | Integer | Maximum number of messages to queue at any given time when "replaying". Default: 20 |
 
 #### Example ####
@@ -380,7 +380,7 @@ Every persisted message will be resent (if resending is confirmed by the applica
 | --- | --- | --- | --- |
 | *name* | String | Yes | Name of the message to be sent. |
 | *data* | Any serializable type | No | Data to be sent to the partner. Default: `null` |
-| *data* | Any serializable type | No | Data to be sent to the partner. Default: RM_IMPORTANCE_LOW |
+| *importance* | Any serializable type | No | Data to be sent to the partner. Default: RM_IMPORTANCE_LOW |
 | *ackTimeout* | Integer | No | Individual message timeout. Default: `null` |
 | *metadata* | Any serializable type | No | Message metadata. This data **WILL NOT** be sent to the partner. Default: `null` |
 
