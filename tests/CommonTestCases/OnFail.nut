@@ -29,7 +29,7 @@ class OnFailTestCase extends CustomTestCase {
 
             rm.onFail(function(msg, reason) {
                 this.assertDeepEqual(message, msg);
-                this.assertEqual(reason, RM_ERR_ACK_TIMEOUT);
+                this.assertEqual(reason, MSGR_ERR_ACK_TIMEOUT);
                 resolve();
             }.bindenv(this));
 

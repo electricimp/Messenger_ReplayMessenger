@@ -30,7 +30,7 @@ class OnFailTestCase extends CustomTestCase {
             local origMessage = null;
             rm.onFail(function(msg, reason) {
                 _areMessagesEqual(origMessage, msg);
-                this.assertEqual(reason, RM_ERR_ACK_TIMEOUT);
+                this.assertEqual(reason, MSGR_ERR_ACK_TIMEOUT);
                 resolve();
             }.bindenv(this));
 

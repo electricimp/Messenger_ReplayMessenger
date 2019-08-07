@@ -24,24 +24,26 @@
 
 
 // Default configuration values
-const RM_DEFAULT_DEBUG              = 0;
-const RM_DEFAULT_ACK_TIMEOUT_SEC    = 10.0;
-const RM_DEFAULT_FIRST_MESSAGE_ID   = 0;
+const MSGR_DEFAULT_DEBUG              = 0;
+const MSGR_DEFAULT_ACK_TIMEOUT_SEC    = 10.0;
+const MSGR_DEFAULT_FIRST_MESSAGE_ID   = 0;
 // Maximum number of messages to be sent per second
-const RM_DEFAULT_MAX_MESSAGE_RATE   = 10;
+const MSGR_DEFAULT_MAX_MESSAGE_RATE   = 10;
 
 // Other configuration constants
-const RM_QUEUE_CHECK_INTERVAL_SEC   = 0.5;
-const RM_IMPORTANCE_LOW             = 0;
+const MSGR_QUEUE_CHECK_INTERVAL_SEC   = 0.5;
+// Importance level used for ReplayMessanger functionality, 
+// so keep RM_ preface so all importance constants match
+const RM_IMPORTANCE_LOW               = 0;
 
 // Message types
-const RM_MESSAGE_TYPE_ACK           = "RM_ACK";
-const RM_MESSAGE_TYPE_DATA          = "RM_DATA";
+const MSGR_MESSAGE_TYPE_ACK           = "RM_ACK";
+const MSGR_MESSAGE_TYPE_DATA          = "RM_DATA";
 
 // Error messages
-const RM_ERR_NO_CONNECTION          = "No connection";
-const RM_ERR_ACK_TIMEOUT            = "Ack timeout";
-const RM_ERR_RATE_LIMIT_EXCEEDED    = "Maximum sending rate exceeded";
+const MSGR_ERR_NO_CONNECTION          = "No connection";
+const MSGR_ERR_ACK_TIMEOUT            = "Ack timeout";
+const MSGR_ERR_RATE_LIMIT_EXCEEDED    = "Maximum sending rate exceeded";
 
 class Messenger {
 
@@ -127,7 +129,7 @@ class Messenger {
         constructor(id, name, data, importance, ackTimeout, metadata, address = null) {
             payload = {
                 "id"  : id,
-                "type": RM_MESSAGE_TYPE_DATA,
+                "type": MSGR_MESSAGE_TYPE_DATA,
                 "name": name,
                 "data": data
             };
@@ -152,15 +154,15 @@ class Messenger {
     */
     constructor(options = {}) {
         // Read configuration
-        _debug      = "debug"       in options ? options["debug"]       : RM_DEFAULT_DEBUG;
-        _ackTimeout = "ackTimeout"  in options ? options["ackTimeout"]  : RM_DEFAULT_ACK_TIMEOUT_SEC;
-        _nextId     = "firstMsgId"  in options ? options["firstMsgId"]  : RM_DEFAULT_FIRST_MESSAGE_ID;
-        _maxRate    = "maxRate"     in options ? options["maxRate"]     : RM_DEFAULT_MAX_MESSAGE_RATE;
+        _debug      = "debug"       in options ? options["debug"]       : MSGR_DEFAULT_DEBUG;
+        _ackTimeout = "ackTimeout"  in options ? options["ackTimeout"]  : MSGR_DEFAULT_ACK_TIMEOUT_SEC;
+        _nextId     = "firstMsgId"  in options ? options["firstMsgId"]  : MSGR_DEFAULT_FIRST_MESSAGE_ID;
+        _maxRate    = "maxRate"     in options ? options["maxRate"]     : MSGR_DEFAULT_MAX_MESSAGE_RATE;
 
         // Partner initialization
         _partner = _isAgent() ? device : agent;
-        _partner.on(RM_MESSAGE_TYPE_ACK, _onAckReceived.bindenv(this));
-        _partner.on(RM_MESSAGE_TYPE_DATA, _onDataReceived.bindenv(this));
+        _partner.on(MSGR_MESSAGE_TYPE_ACK, _onAckReceived.bindenv(this));
+        _partner.on(MSGR_MESSAGE_TYPE_DATA, _onDataReceived.bindenv(this));
 
         _sentQueue  = {};
         _rateCounter = 0;
@@ -298,13 +300,13 @@ class Messenger {
             _lastRateMeasured = now;
         } else if (_rateCounter >= _maxRate) {
             // Rate limit exceeded, raise an error
-            _onSendFail(msg, RM_ERR_RATE_LIMIT_EXCEEDED);
+            _onSendFail(msg, MSGR_ERR_RATE_LIMIT_EXCEEDED);
             return;
         }
 
         // Try to send
         local payload = msg.payload;
-        if (!_partner.send(RM_MESSAGE_TYPE_DATA, payload)) {
+        if (!_partner.send(MSGR_MESSAGE_TYPE_DATA, payload)) {
             // Send complete
             _log("Sent. Id: " + id);
 
@@ -315,7 +317,7 @@ class Messenger {
             _setTimer();
         } else {
             // Sending failed
-            _onSendFail(msg, RM_ERR_NO_CONNECTION);
+            _onSendFail(msg, MSGR_ERR_NO_CONNECTION);
         }
     }
 
@@ -370,7 +372,7 @@ class Messenger {
                 // Function to send custom acknowledgment with optional data.
                 // Optionally called by the application
                 local ack = function(data = null) {
-                    error = _partner.send(RM_MESSAGE_TYPE_ACK, {
+                    error = _partner.send(MSGR_MESSAGE_TYPE_ACK, {
                         "id" : id,
                         "data" : data
                     });
@@ -383,7 +385,7 @@ class Messenger {
             if (!customAckFlag) {
                 // The application hasn't called customAck().
                 // Send acknowledgment automatically
-                error = _partner.send(RM_MESSAGE_TYPE_ACK, {
+                error = _partner.send(MSGR_MESSAGE_TYPE_ACK, {
                     "id" : id
                 });
             }
@@ -422,7 +424,7 @@ class Messenger {
         foreach (id, msg in _sentQueue) {
             local ackTimeout = msg._ackTimeout ? msg._ackTimeout : _ackTimeout;
             if (now - msg._sentTime >= ackTimeout) {
-                _onSendFail(msg, RM_ERR_ACK_TIMEOUT);
+                _onSendFail(msg, MSGR_ERR_ACK_TIMEOUT);
             }
         }
 
@@ -454,7 +456,7 @@ class Messenger {
             // The timer is already running
             return;
         }
-        _queueTimer = imp.wakeup(RM_QUEUE_CHECK_INTERVAL_SEC,
+        _queueTimer = imp.wakeup(MSGR_QUEUE_CHECK_INTERVAL_SEC,
                                 _processQueues.bindenv(this));
     }
 

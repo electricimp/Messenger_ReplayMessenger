@@ -255,7 +255,7 @@ class ReplayMessenger extends Messenger {
         foreach (id, msg in _sentQueue) {
             local ackTimeout = msg._ackTimeout ? msg._ackTimeout : _ackTimeout;
             if (now - msg._sentTime >= ackTimeout) {
-                _onSendFail(msg, RM_ERR_ACK_TIMEOUT);
+                _onSendFail(msg, MSGR_ERR_ACK_TIMEOUT);
             }
         }
 

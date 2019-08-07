@@ -43,9 +43,9 @@ class ConstructorTestCase extends ImpTestCase {
         this.assertEqual(MAX_RATE_TEST, rm._maxRate);
 
         rm = Messenger();
-        this.assertEqual(RM_DEFAULT_DEBUG, rm._debug);
-        this.assertEqual(RM_DEFAULT_ACK_TIMEOUT_SEC, rm._ackTimeout);
-        this.assertEqual(RM_DEFAULT_FIRST_MESSAGE_ID, rm._nextId);
-        this.assertEqual(RM_DEFAULT_MAX_MESSAGE_RATE, rm._maxRate);
+        this.assertEqual(MSGR_DEFAULT_DEBUG, rm._debug);
+        this.assertEqual(MSGR_DEFAULT_ACK_TIMEOUT_SEC, rm._ackTimeout);
+        this.assertEqual(MSGR_DEFAULT_FIRST_MESSAGE_ID, rm._nextId);
+        this.assertEqual(MSGR_DEFAULT_MAX_MESSAGE_RATE, rm._maxRate);
     }
 }
