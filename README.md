@@ -176,7 +176,7 @@ This method sets the default callback, which will be executed when a received me
 
 | Parameter | Type | Required? | Description |
 | --- | --- | --- | --- |
-| *onMsg* | Function | Yes | Callback that is triggered when a message without an *on* handler is received. See [**onMsg Callback**](#onmsg-callback), above, for the function’s details |
+| *onMsg* | Function | Yes | Callback that is triggered when a message without an *on* handler is received. See [**onMsg Callback**](#the-onmsg-callback), above, for the function’s details |
 
 #### Return Value ####
 
@@ -268,7 +268,7 @@ Your *onFail* function should include the following parameters:
 
 | Parameter | Type | Required? | Description |
 | --- | --- | --- | --- |
-| *message* | A [Messenger.Message](#messengermessage-class-usage) instance | Yes | The [Messenger.Message](#messengermessage-usage) instance created and returned when message was sent |
+| *message* | A [Messenger.Message](#messengermessage-class-usage) instance | Yes | The [Messenger.Message](#messengermessage-class-usage) instance created and returned when message was sent |
 | *reason* | String | Yes | A description of the message failure |
 
 #### Example ####
@@ -371,9 +371,9 @@ This method sends a named message to the partner and returns an instance of the 
 
 Every message created by this method has an additional property called *importance* which takes one of the three following values:
 
-- `RM_IMPORTANCE_LOW` &mdash; The message will not be persisted and resent. This is the default.
-- `RM_IMPORTANCE_HIGH` &mdash; The message will be persisted if it hasn’t been sent successfully or hasn’t been acknowledged within the timeout period.
-- `RM_IMPORTANCE_CRITICAL` &mdash; The message will be persisted immediately.
+- *RM_IMPORTANCE_LOW* &mdash; The message will not be persisted and resent. This is the default.
+- *RM_IMPORTANCE_HIGH* &mdash; The message will be persisted if it hasn’t been sent successfully or hasn’t been acknowledged within the timeout period.
+- *RM_IMPORTANCE_CRITICAL* &mdash; The message will be persisted immediately.
 
 Every persisted message will be resent if this is confirmed by the application. Every persisted message is removed from the storage once it has been sent and acknowledged.
 
