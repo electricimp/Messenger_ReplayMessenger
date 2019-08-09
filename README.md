@@ -281,7 +281,7 @@ function onFail(message, reason) {
     local metadata = message.metadata;
 
     // Log message info
-    server.error("Message " + name + " with id " + id + " send failure reason: " reason);
+    server.error("Message " + name + " with id " + id + " send failure reason: " + reason);
 
     // TODO: Create switch statement to handle failures for specific messages based on id, name, data or metadata
 }
