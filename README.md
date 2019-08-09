@@ -13,7 +13,7 @@ The ReplayMessenger library can be used alongside Messenger if persistent storag
 - Resending of persisted messages.
 - Immediate persistence of critically important messages until they are both sent and acknowledged.
 
-ReplayMessenger is only supported on the device, where messages are able to be persisted in SPI flash storage. ReplayMessenger extends the base Messenger class, therefore Messenger must be included *before* and in addition to ReplayMessenger, as show in the library inclusion statements below.
+ReplayMessenger is only supported on the device, where messages are able to be persisted in SPI flash storage. ReplayMessenger extends the base Messenger class, therefore Messenger must be included *before* and in addition to ReplayMessenger, as shown in the library inclusion statements below.
 
 **To include the Messenger library in your project, add the following at the top of your agent and device code:**
 
@@ -106,15 +106,13 @@ Your *onMsg* function should include the following parameters:
 | Parameter | Type | Required? | Description |
 | --- | --- | --- | --- |
 | *message* | Table | Yes | The received message’s payload. See [**Message Payload Table**](#message-payload-table), below, for details |
-| *customAck* | Function | Yes | A function that your *onMsg* code can call to customize message acknowledgement. See [**Custom Acknowledgement**](#custom-acknowledgement), below, for details |
+| *customAck* | Function | Yes | A function that your *onMsg* code can call to customize message acknowledgement. This function takes no parameters. See [**Custom Acknowledgement**](#custom-acknowledgement), below, for details |
 
 #### Custom Acknowledgement ####
 
 If your *onMsg* callback code does not call the function it receives through its *customAck* parameter, an automatic message acknowledgement will be sent by the library to the partner. However, if you wish to add data to and/or delay the message acknowledgement, your code should call the *customAck* function and store the return value, itself a function, that can be called later when you wish to acknowledge the original message.
 
-The function passed into the *customAck* parameter has no parameters of its own.
-
-When called, the acknowledgement function sends a message acknowledgement to the partner. If you wish to add data to this acknowledgement, pass it into the acknowledgement function. The data can be any serializable type and defaults to  `null`. The acknowledgement function does not return a value.
+When called, the acknowledgement function sends an acknowledgement message to the partner. If you wish to add data to this acknowledgement, pass it into the acknowledgement function. The data can be any serializable type and defaults to  `null`. The acknowledgement function does not return a value.
 
 Here is a typical custom acknowledgement flow:
 
@@ -124,7 +122,7 @@ Here is a typical custom acknowledgement flow:
 4. Your *onMsg* callback calls the received custom acknowledgement function to prevent auto-acknowledgement.
 5. Your *onMsg* callback stores the returned acknowledgement function.
 6. Your *onMsg* callback processes the message payload as required by the application.
-7. Your *onMsg* callback finally acknowledges the message by calling the stored acknowledgement function.
+7. Your *onMsg* callback triggers a function or flow that acknowledges the message by calling the stored acknowledgement function.
 
 This flow is illustrated in the example below.
 
@@ -293,7 +291,7 @@ msngr.onFail(onFail.bindenv(this));
 
 ## Messenger.Message Class Usage ##
 
-Messages should only be created by calling the [*Messenger.send()*](#sendname-data-acktimeout-metadata) or [*ReplayMessenger.send()*](#sendname-data-importance-acktimeout-metadata) methods, never by your application. These methods will return an instance of this class. The message instance will also be passed to the global [*onAck*](#onackonackcallback) and [*onFail*](#onfailonfailcallback) callbacks.
+Messages should only be created by calling the [*Messenger.send()*](#sendname-data-acktimeout-metadata) or [*ReplayMessenger.send()*](#sendname-data-importance-acktimeout-metadata) methods, never by your application. These methods will return an instance of this class. The message instance will also be passed to the global [*onAck*](#onackonackcallback) and [*onFail*](#onfailonfailcallback) callbacks, and [ReplayMessenger's *confirmResend()*](#confirmresendconfirmresendcallback) function.
 
 #### Public Properties ####
 
@@ -351,7 +349,7 @@ local rm  = ReplayMessenger(sfl, cm);
 
 ## ReplayMessenger Class Methods ##
 
-**All** methods documented in the [Messenger Class Methods](#messenger-class-methods) section above are also available to ReplayMessenger instances, with the exception of one minor update to the [*send()*](#sendname-data-importance-acktimeout-metadata) method and an additional methods, [*confirmResend()*](#confirmresendconfirmresendcallback).
+**All** methods documented in the [Messenger Class Methods](#messenger-class-methods) section above are also available to ReplayMessenger instances, with the exception of one minor update to the [*send()*](#sendname-data-importance-acktimeout-metadata) method and an additional method, [*confirmResend()*](#confirmresendconfirmresendcallback).
 
 ### send(*name[, data][, importance][, ackTimeout][, metadata]*) ###
 
@@ -426,11 +424,17 @@ rm.confirmResend(function(message) {
 
 ```squirrel
 rm.confirmResend(function(message) {
-    // Resend important messages
-    if (message.payload.name == "important.message") return true;
+    // Filter for messages sending readings  
+    if (message.payload.name == "reading") {
+        local now = time();
+        local dataTimestamp = message.payload.data.ts;
 
-    // Drop all other messages
-    return false;
+        // Drop messages that are older than 5min
+        if (now - dataTimestamp > 300) return false;
+    }
+
+    // Resend all other messages
+    return true;    
 });
 ```
 
