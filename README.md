@@ -106,7 +106,7 @@ Your *onMsg* function should include the following parameters:
 | Parameter | Type | Required? | Description |
 | --- | --- | --- | --- |
 | *message* | Table | Yes | The received message’s payload. See [**Message Payload Table**](#message-payload-table), below, for details |
-| *customAck* | Function | Yes | A function that your *onMsg* code can call to customize message acknowledgement. This function takes no parameters. See [**Custom Acknowledgement**](#custom-acknowledgement), below, for details |
+| *customAck* | Function | Yes | A function that your *onMsg* code can call to customize message acknowledgement. This function has no parameters. See [**Custom Acknowledgement**](#custom-acknowledgement), below, for details |
 
 #### Custom Acknowledgement ####
 
@@ -291,7 +291,7 @@ msngr.onFail(onFail.bindenv(this));
 
 ## Messenger.Message Class Usage ##
 
-Messages should only be created by calling the [*Messenger.send()*](#sendname-data-acktimeout-metadata) or [*ReplayMessenger.send()*](#sendname-data-importance-acktimeout-metadata) methods, never by your application. These methods will return an instance of this class. The message instance will also be passed to the global [*onAck*](#onackonackcallback) and [*onFail*](#onfailonfailcallback) callbacks, and [ReplayMessenger's *confirmResend()*](#confirmresendconfirmresendcallback) function.
+Messages should only be created by calling the [*Messenger.send()*](#sendname-data-acktimeout-metadata) or [*ReplayMessenger.send()*](#sendname-data-importance-acktimeout-metadata) methods, never by your application. These methods will return an instance of this class. The message instance will also be passed to the global [*onAck*](#onackonackcallback) and [*onFail*](#onfailonfailcallback) callbacks, and ReplayMessenger’s [*confirmResend()*](#confirmresendconfirmresendcallback) function.
 
 #### Public Properties ####
 
@@ -424,7 +424,7 @@ rm.confirmResend(function(message) {
 
 ```squirrel
 rm.confirmResend(function(message) {
-    // Filter for messages sending readings  
+    // Filter for messages sending readings
     if (message.payload.name == "reading") {
         local now = time();
         local dataTimestamp = message.payload.data.ts;
@@ -434,7 +434,7 @@ rm.confirmResend(function(message) {
     }
 
     // Resend all other messages
-    return true;    
+    return true;
 });
 ```
 
