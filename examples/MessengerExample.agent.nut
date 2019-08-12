@@ -22,13 +22,16 @@
 // ARISING FROM, OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR
 // OTHER DEALINGS IN THE SOFTWARE.
 
-
+// --------------------------------------------------------------------------------
 // Basic example usage for Messenger Library 
 // This example shows the following:
 // - Sending messages with and without data
 // - Responding to message with default ACK and custom ACK
+// - Processing ACK data 
+// - Registering message failure and unknown message handlers
 // Hardware requirements: 
 // - imp001 Explorer Kit
+// --------------------------------------------------------------------------------
 
 // Include library
 #require "Messenger.lib.nut:0.1.0"

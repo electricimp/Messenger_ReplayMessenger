@@ -25,19 +25,19 @@
 
 // Default configuration values
 // If the queue of messages waiting for acknowledgment exceeds this limit, re-sending (replaying) will be postponed
-const RM_DEFAULT_RESEND_LIMIT = 20;
+const RM_DEFAULT_RESEND_LIMIT  = 20;
 
 // Other configuration values
 // If the current send rate exceeds this threshold (in percentages), re-sending (replaying) will be postponed
 const RM_RESEND_RATE_LIMIT_PCT = 50;
 
 // Importance constants
-const RM_IMPORTANCE_HIGH = 1;
-const RM_IMPORTANCE_CRITICAL = 2;
+const RM_IMPORTANCE_HIGH       = 1;
+const RM_IMPORTANCE_CRITICAL   = 2;
 
 // Error messages
-const RM_ERR_OUT_OF_MEMORY = "Message has been erased. No free space on flash";
-const RM_ERR_NOT_CONFIRMED = "Resending has not been confirmed by the application";
+const RM_ERR_OUT_OF_MEMORY     = "Message has been erased. No free space on flash";
+const RM_ERR_NOT_CONFIRMED     = "Resending has not been confirmed by the application";
 
 
 class ReplayMessenger extends Messenger {

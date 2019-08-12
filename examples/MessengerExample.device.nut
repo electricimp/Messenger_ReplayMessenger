@@ -22,13 +22,16 @@
 // ARISING FROM, OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR
 // OTHER DEALINGS IN THE SOFTWARE.
 
-
+// --------------------------------------------------------------------------------
 // Basic example usage for Messenger Library 
 // This example shows the following:
 // - Sending messages with and without data
 // - Responding to message with default ACK and custom ACK
+// - Processing ACK data 
+// - Registering message failure and unknown message handlers
 // Hardware requirements: 
 // - imp001 Explorer Kit
+// --------------------------------------------------------------------------------
 
 // Include libraries
 #require "Messenger.lib.nut:0.1.0"
@@ -106,6 +109,22 @@ function tempHandler(payload, customAck) {
     }.bindenv(this));
 }
 
-// Register 'onMsg' callbacks for given names
+// Define messenger handlers
+function onUnknownMsg(payload, customAck) {
+    local data = payload.data;
+    server.log("----------------------------------------------------------");
+    // Log message name and payload data
+    server.error("Received unknown message: " + payload.name);
+    if (typeof data == "table" || typeof data == "array") {
+        server.log(http.jsonencode(data));
+    } else {
+        server.log(data);
+    }
+    server.log("----------------------------------------------------------");
+    // Allow automatic msg ack, so msg is not retried.
+}
+
+// Register 'onMsg' callbacks for given names, and generic handler
 msngr.on(MSG_NAMES.LX, lxHandler.bindenv(this));
 msngr.on(MSG_NAMES.TEMP, tempHandler.bindenv(this));
+msngr.defaultOn(onUnknownMsg.bindenv(this));

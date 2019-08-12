@@ -24,6 +24,7 @@ ReplayMessenger is only supported on the device, where messages are able to be p
 **To include the ReplayMessenger library in your project, add the following at the top of your device code:**
 
 ```
+#require "Serializer.class.nut:1.0.0"
 #require "SPIFlashLogger.device.lib.nut:2.2.0"
 #require "ConnectionManager.lib.nut:3.1.1"
 #require "Messenger.lib.nut:0.1.0"
@@ -337,6 +338,7 @@ ReplayMessenger extends Messenger by adding features for resending and persistin
 #### Example ####
 
 ```squirrel
+#require "Serializer.class.nut:1.0.0"
 #require "SPIFlashLogger.device.lib.nut:2.2.0"
 #require "ConnectionManager.lib.nut:3.1.1"
 #require "Messenger.lib.nut:0.1.0"
