@@ -1,0 +1,15 @@
+{
+  "deviceGroupId": "3e4a50eb-0fc8-cab6-41b9-3e02ced9270e",
+  "deviceGroupName" : "impFarm K",
+  "timeout": 300,
+  "stopOnFail": false,
+  "allowDisconnect": true,
+  "builderCache": false,
+  "testFiles": [
+    "./*/*.test.nut",
+    "*.test.nut",
+    "tests/**/*.test.nut"
+  ],
+  "deviceFile": "./tests/DeviceIncludes.nut",
+  "agentFile": "./tests/AgentIncludes.nut"
+}
