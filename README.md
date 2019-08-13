@@ -31,7 +31,8 @@ ReplayMessenger is only supported on the device, where messages are able to be p
 #require "ReplayMessenger.device.lib.nut:0.1.0"
 ```
 
-https://cse-ci.electricimp.com/app/rest/builds/buildType:(id:MessengerReplayMessenger_BuildAndTest)/statusIcon
+
+![Build Status](https://cse-ci.electricimp.com/app/rest/builds/buildType:(id:MessengerReplayMessenger_BuildAndTest)/statusIcon)
 
 ## Messenger Class Usage ##
 
