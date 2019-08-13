@@ -31,6 +31,9 @@ ReplayMessenger is only supported on the device, where messages are able to be p
 #require "ReplayMessenger.device.lib.nut:0.1.0"
 ```
 
+
+![Build Status](https://cse-ci.electricimp.com/app/rest/builds/buildType:(id:MessengerReplayMessenger_BuildAndTest)/statusIcon)
+
 ## Messenger Class Usage ##
 
 In the following discussion, the term ‘partner’ refers to either the agent or the device: the device’s partner is its agent; the agent’s partner is the device.
