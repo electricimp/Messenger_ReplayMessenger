@@ -542,9 +542,8 @@ class ReplayMessenger extends Messenger {
     function _maxMsgId() {
         local maxId = -1;
         local index = 1;
-        local payload = null;
-
-        while (payload = _spiFL.readSync(index++)) {
+        local payload = _spiFL.readSync(-1);
+        if (payload) {
             local id = payload[RM_COMPRESSED_MSG_PAYLOAD]["id"];
             maxId = id > maxId ? id : maxId;
         }
