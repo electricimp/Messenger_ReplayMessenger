@@ -47,7 +47,7 @@ const MSGR_ERR_RATE_LIMIT_EXCEEDED    = "Maximum sending rate exceeded";
 
 class Messenger {
 
-    static VERSION = "0.1.0";
+    static VERSION = "0.2.0";
 
     _debug = false;
 

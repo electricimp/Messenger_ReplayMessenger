@@ -1,4 +1,4 @@
-# Messenger 0.1.0 + ReplayMessenger 0.1.0 #
+# Messenger 0.2.0 + ReplayMessenger 0.2.0 #
 
 The Messenger library provides basic asynchronous bidirectional agent and device communication. It includes the following features:
 
@@ -18,7 +18,7 @@ ReplayMessenger is only supported on the device, where messages are able to be p
 **To include the Messenger library in your project, add the following at the top of your agent and device code:**
 
 ```
-#require "Messenger.lib.nut:0.1.0"
+#require "Messenger.lib.nut:0.2.0"
 ```
 
 **To include the ReplayMessenger library in your project, add the following at the top of your device code:**
