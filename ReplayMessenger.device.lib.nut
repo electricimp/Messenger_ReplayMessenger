@@ -78,6 +78,9 @@ class ReplayMessenger extends Messenger {
     // Flag which indicates if cleanup of the next sector is needed in order to persist new messages
     _cleanupNeeded = null;
 
+    // Flag indicating that we know there are no pending messages in the SPI flash
+    _surelyEmpty = false;
+
     /**
     * ReplayMessenger constructor.
     *
@@ -285,6 +288,7 @@ class ReplayMessenger extends Messenger {
             msg._address = _spiFL.getPosition();
             _spiFL.write(payload);
             _log("Message persisted. Id: " + msg.payload.id);
+            _surelyEmpty = false;
             return true;
         } else {
             _log("Need to clean up the next sector");
@@ -556,8 +560,15 @@ class ReplayMessenger extends Messenger {
         if (_sentQueue.len() != 0) {
             return false;
         }
+
         // We can't process persisted messages is we are offline
-        return !_cm.isConnected() || _spiFL.readSync(1) == null;
+        if (_surelyEmpty || !_cm.isConnected()) {
+          return true;
+        }
+
+        _surelyEmpty = (_spiFL.readSync(-1) == null);
+
+        return _surelyEmpty;
     }
 
     function _typeof() {
